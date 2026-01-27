@@ -84,7 +84,7 @@ export default function RegisterPage() {
     setIsLoading(true)
     setErrors({})
 
-    // Placeholder for NextAuth.js integration
+    // Placeholder for NextAuth.js integ
    
    
     
