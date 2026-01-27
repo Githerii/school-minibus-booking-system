@@ -13,6 +13,7 @@ class Parent(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    bookings = db.relationship("Booking", back_populates="parent")
 
 class Route(db.Model):
     __tablename__ = "routes"
@@ -23,9 +24,13 @@ class Route(db.Model):
     end_location = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    buses = db.relationship("Bus", back_populates="route")
+
 class Driver(db.Model):
     __tablename__ = "drivers"
 
     driver_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, unique=True)
+
+    buses = db.relationship("Bus", back_populates="driver")
