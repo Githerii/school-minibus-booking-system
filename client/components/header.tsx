@@ -38,6 +38,14 @@ export function Header() {
           <Button size="sm" asChild>
             <Link href="/register">Sign Up</Link>
           </Button>
+          <button
+            type="button"
+            className="md:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
         </div>
 
       </div>
