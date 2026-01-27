@@ -14,3 +14,13 @@ class Parent(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class Route(db.Model):
+    __tablename__ = "routes"
+
+    route_id = db.Column(db.Integer, primary_key=True)
+    route_name = db.Column(db.String)
+    start_location = db.Column(db.String, nullable=False)
+    end_location = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
