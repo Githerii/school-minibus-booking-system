@@ -86,7 +86,7 @@ export default function RegisterPage() {
 
     // Placeholder for NextAuth.js integration
     // Example: Create user via API route, then signIn
-    // await fetch("/api/auth/register", { method: "POST", body: JSON.stringify({ fullName, email, password }) })
+   
     
 
     // Simulate API call
