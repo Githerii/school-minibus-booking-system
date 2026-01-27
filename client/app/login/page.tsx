@@ -57,7 +57,7 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     
     // Example error state for demonstration
-    // setErrors({ general: "Invalid email or password" })
+    // setErrors({ general: "Invalid email or password
     
     setIsLoading(false)
   }
