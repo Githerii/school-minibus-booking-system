@@ -39,7 +39,7 @@ export function Hero() {
             </Button>
           </div>
 
-          
+
           <div className="mt-12 flex flex-wrap items-center justify-center gap-6 md:gap-10">
             <div className="flex items-center gap-2 text-primary-foreground/90">
               <div className="flex size-10 items-center justify-center rounded-full bg-primary-foreground/20">
@@ -61,6 +61,25 @@ export function Hero() {
             </div>
           </div>
 
+
+          <div className="mt-16 grid w-full max-w-3xl grid-cols-2 gap-6 md:grid-cols-4">
+            <div className="rounded-xl bg-primary-foreground/10 p-4 text-center backdrop-blur">
+              <div className="text-3xl font-bold text-primary-foreground">5,000+</div>
+              <div className="mt-1 text-sm text-primary-foreground/80">Happy Parents</div>
+            </div>
+            <div className="rounded-xl bg-primary-foreground/10 p-4 text-center backdrop-blur">
+              <div className="text-3xl font-bold text-primary-foreground">200+</div>
+              <div className="mt-1 text-sm text-primary-foreground/80">Partner Schools</div>
+            </div>
+            <div className="rounded-xl bg-primary-foreground/10 p-4 text-center backdrop-blur">
+              <div className="text-3xl font-bold text-primary-foreground">47</div>
+              <div className="mt-1 text-sm text-primary-foreground/80">Counties Served</div>
+            </div>
+            <div className="rounded-xl bg-primary-foreground/10 p-4 text-center backdrop-blur">
+              <div className="text-3xl font-bold text-primary-foreground">99.8%</div>
+              <div className="mt-1 text-sm text-primary-foreground/80">On-Time Rate</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
