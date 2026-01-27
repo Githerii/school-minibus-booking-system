@@ -23,4 +23,9 @@ class Route(db.Model):
     end_location = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Driver(db.Model):
+    __tablename__ = "drivers"
 
+    driver_id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, unique=True)
