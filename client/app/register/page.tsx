@@ -85,7 +85,7 @@ export default function RegisterPage() {
     setErrors({})
 
     // Placeholder for NextAuth.js integration
-    // Example: Create user via API route, then signIn
+   
    
     
 
