@@ -92,8 +92,8 @@ export default function RegisterPage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    // Example error state for demonstration
-    // setErrors({ general: "An account with this email already exists" })
+    
+    
 
     setIsLoading(false)
   }
