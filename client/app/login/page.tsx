@@ -57,7 +57,7 @@ export default function LoginPage() {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     
     // Example error state for demonstration
-    // setErrors({ general: "Invalid ema
+    
     
     setIsLoading(false)
   }
