@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { Button } from "./ui/button"
 import { Bus } from "lucide-react"
 
 export function Header() {
@@ -18,19 +19,28 @@ export function Header() {
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Kenya</span>
           </div>
         </Link>
-          <nav className="hidden items-center gap-6 md:flex">
-            <Link href="#features" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              Features
-            </Link>
-            <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              How it Works
-            </Link>
-            <Link href="#contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-              Contact
-            </Link>
-          </nav>
-  
+        <nav className="hidden items-center gap-6 md:flex">
+          <Link href="#features" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Features
+          </Link>
+          <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            How it Works
+          </Link>
+          <Link href="#contact" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Contact
+          </Link>
+        </nav>
+
+        <div className="hidden items-center gap-3 md:flex">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/login">Login</Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/register">Sign Up</Link>
+          </Button>
         </div>
+
+      </div>
     </header>
 
 
