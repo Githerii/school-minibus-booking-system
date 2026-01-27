@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "./ui/button"
-import { Menu,Bus, X } from "lucide-react"
+import { Menu, Bus, X } from "lucide-react"
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -47,10 +47,42 @@ export function Header() {
             {isMenuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
           </button>
         </div>
-
+        {isMenuOpen && (
+          <div className="border-t bg-background md:hidden">
+            <nav className="flex flex-col gap-4 p-4">
+              <Link
+                href="#features"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link
+                href="#how-it-works"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                How it Works
+              </Link>
+              <Link
+                href="#contact"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              <div className="flex flex-col gap-2 pt-4 border-t">
+                <Button variant="ghost" className="w-full" asChild>
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
+                </Button>
+                <Button className="w-full" asChild>
+                  <Link href="/register" onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
+                </Button>
+              </div>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
-
-
   )
 }
