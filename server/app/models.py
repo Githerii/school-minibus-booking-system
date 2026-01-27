@@ -49,4 +49,20 @@ class Bus(db.Model):
     route = db.relationship("Route", back_populates="buses")
     driver = db.relationship("Driver", back_populates="buses")
     bookings = db.relationship("Booking", back_populates="bus")
+
+class Booking(db.Model):
+    __tablename__ = "bookings"
+
+    booking_id = db.Column(db.Integer, primary_key=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey("parents.parent_id"), nullable=False)
+    bus_id = db.Column(db.Integer, db.ForeignKey("buses.bus_id"), nullable=False)
+    pickup_point = db.Column(db.String)
+    drop_off_point = db.Column(db.String)
+    booking_date = db.Column(db.String, nullable=False)
+    status = db.Column(db.String, default="booked")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    parent = db.relationship("Parent", back_populates="bookings")
+    bus = db.relationship("Bus", back_populates="bookings")
+    
     
