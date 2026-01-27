@@ -38,7 +38,29 @@ export function Hero() {
               <Link href="/login">Login to Dashboard</Link>
             </Button>
           </div>
-      
+
+          
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-6 md:gap-10">
+            <div className="flex items-center gap-2 text-primary-foreground/90">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary-foreground/20">
+                <Clock className="size-5" />
+              </div>
+              <span className="text-sm font-medium">On-time guarantee</span>
+            </div>
+            <div className="flex items-center gap-2 text-primary-foreground/90">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary-foreground/20">
+                <Shield className="size-5" />
+              </div>
+              <span className="text-sm font-medium">NTSA certified drivers</span>
+            </div>
+            <div className="flex items-center gap-2 text-primary-foreground/90">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary-foreground/20">
+                <MapPin className="size-5" />
+              </div>
+              <span className="text-sm font-medium">GPS tracking</span>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
