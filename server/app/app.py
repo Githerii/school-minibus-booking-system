@@ -116,6 +116,13 @@ def create_app():
 
         db.session.commit()
         return jsonify({"message": "Route updated"}), 200
+    
+    @app.delete("/routes/<int:route_id>")
+    def delete_route(route_id):
+        route = Route.query.get_or_404(route_id)
+        db.session.delete(route)
+        db.session.commit()
+        return jsonify({"message": "Route deleted"}), 200
 
     #CRUD for Drivers - bus drivers
     @app.post("/drivers")
