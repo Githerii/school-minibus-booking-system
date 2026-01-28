@@ -151,6 +151,13 @@ def create_app():
 
         db.session.commit()
         return jsonify({"message": "Driver updated"}), 200
+    
+    @app.delete("/drivers/<int:driver_id>")
+    def delete_driver(driver_id):
+        driver = Driver.query.get_or_404(driver_id)
+        db.session.delete(driver)
+        db.session.commit()
+        return jsonify({"message": "Driver deleted"}), 200
 
     #CRUD for Buses
     @app.post("/buses")
