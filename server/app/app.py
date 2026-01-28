@@ -232,8 +232,18 @@ def create_app():
             for b in bookings
         ])
     
+    @app.put("/bookings/<int:booking_id>")
+    def update_booking(booking_id):
+        booking = Booking.query.get_or_404(booking_id)
+        data = request.get_json()
+
+        booking.pickup_point = data.get("pickup_point", booking.pickup_point)
+        booking.dropoff_point = data.get("dropoff_point", booking.dropoff_point)
+        booking.bus_id = data.get("bus_id", booking.bus_id)
+
+        db.session.commit()
+        return jsonify({"message": "Booking updated"}), 200
+    
     return app
-
-
 
 app = create_app()
