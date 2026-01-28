@@ -64,6 +64,13 @@ def create_app():
             "full_name": parent.full_name
         })
 
+    @app.get("/parents")
+    def get_parents():
+        parents = Parent.query.all()
+        return jsonify([
+            {"parent_id": p.parent_id, "email": p.email, "full_name": p.full_name}
+            for p in parents
+        ])
 
     #CRUD FOR ROUTES
     @app.post("/routes")
