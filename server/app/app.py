@@ -99,6 +99,18 @@ def create_app():
             for d in drivers
         ])
     
+    #CRUD for Buses
+    @app.post("/buses")
+    def create_bus():
+        data = request.get_json()
+        bus = Bus(
+            plate_number=data["plate_number"],
+            route_id=data["route_id"],
+            driver_id=data["driver_id"]
+        )
+        db.session.add(bus)
+        db.session.commit()
+        return jsonify({"message": "Bus created"}), 201
     
     return app
 
