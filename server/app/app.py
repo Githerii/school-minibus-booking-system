@@ -91,7 +91,15 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Driver created"}), 201
 
-
+    @app.get("/drivers")
+    def get_drivers():
+        drivers = Driver.query.all()
+        return jsonify([
+            {"driver_id": d.driver_id, "name": d.name, "email": d.email}
+            for d in drivers
+        ])
+    
+    
     return app
 
 
