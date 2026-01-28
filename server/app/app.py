@@ -14,6 +14,7 @@ def create_app():
     Migrate = Migrate(app, db)
     CORS(app)
 
+    #CRUD for routes
     #creation of a new parent or rather registration
     @app.post("/register")
     def register():
@@ -63,6 +64,17 @@ def create_app():
             "full_name": parent.full_name
         })
 
+
+    #CRUD FOR ROUTES
+    @app.post("/routes")
+    def create_route():
+        data = request.get_json()
+        route = Route(route_name=data["route_name"])
+        db.session.add(route)
+        db.session.commit()
+        return jsonify({"message": "Route created"}), 201
+    
+    
     return app
 
 
