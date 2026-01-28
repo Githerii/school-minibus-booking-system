@@ -82,6 +82,16 @@ def create_app():
             for r in routes
         ])
 
+    #CRUD for Drivers - bus drivers
+    @app.post("/drivers")
+    def create_driver():
+        data = request.get_json()
+        driver = Driver(name=data["name"], email=data["email"])
+        db.session.add(driver)
+        db.session.commit()
+        return jsonify({"message": "Driver created"}), 201
+
+
     return app
 
 
