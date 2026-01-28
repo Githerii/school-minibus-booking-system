@@ -48,7 +48,21 @@ def create_app():
             "full_name": parent.full_name
         }), 201
 
-    
+    #added login 
+    @app.post("/login")
+    def login():
+        data = request.get_json()
+        parent = Parent.query.filter_by(email=data["email"]).first()
+
+        if not parent or not check_password_hash(parent.password_hash, data["password"]):
+            return jsonify({"error": "Invalid credentials"}), 401
+
+        return jsonify({
+            "parent_id": parent.parent_id,
+            "email": parent.email,
+            "full_name": parent.full_name
+        })
+
     return app
 
 
