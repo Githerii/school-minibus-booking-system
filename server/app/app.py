@@ -74,7 +74,14 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Route created"}), 201
     
-    
+    @app.get("/routes")
+    def get_routes():
+        routes = Route.query.all()
+        return jsonify([
+            {"route_id": r.route_id, "route_name": r.route_name}
+            for r in routes
+        ])
+
     return app
 
 
