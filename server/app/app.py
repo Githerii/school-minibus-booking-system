@@ -139,6 +139,19 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Booking created"}), 201
     
+    @app.get("/bookings")
+    def get_bookings():
+        bookings = Booking.query.all()
+        return jsonify([
+            {
+                "booking_id": b.booking_id,
+                "parent": b.parent.full_name,
+                "bus": b.bus.plate_number,
+                "pickup": b.pickup_point,
+                "dropoff": b.dropoff_point
+            }
+            for b in bookings
+        ])
     
     return app
 
