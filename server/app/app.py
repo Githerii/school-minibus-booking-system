@@ -112,6 +112,19 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Bus created"}), 201
     
+    @app.get("/buses")
+    def get_buses():
+        buses = Bus.query.all()
+        return jsonify([
+            {
+                "bus_id": b.bus_id,
+                "plate_number": b.plate_number,
+                "route": b.route.route_name,
+                "driver": b.driver.name
+            }
+            for b in buses
+        ])
+    
     return app
 
 
