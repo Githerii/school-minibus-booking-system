@@ -244,6 +244,13 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Booking updated"}), 200
     
+    @app.delete("/bookings/<int:booking_id>")
+    def delete_booking(booking_id):
+        booking = Booking.query.get_or_404(booking_id)
+        db.session.delete(booking)
+        db.session.commit()
+        return jsonify({"message": "Booking deleted"}), 200
+    
     return app
 
 app = create_app()
