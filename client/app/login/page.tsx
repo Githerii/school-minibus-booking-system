@@ -18,3 +18,11 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
+  const [isLoading, setIsLoading] = useState(false)
