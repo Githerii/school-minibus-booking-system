@@ -43,3 +43,59 @@ export default function RegisterPage() {
     { label: "Contains a number", met: /\d/.test(password) },
     { label: "Contains uppercase letter", met: /[A-Z]/.test(password) },
   ]
+
+  const validateForm = () => {
+    const newErrors: FormErrors = {}
+
+    if (!fullName.trim()) {
+      newErrors.fullName = "Full name is required"
+    } else if (fullName.trim().length < 2) {
+      newErrors.fullName = "Name must be at least 2 characters"
+    }
+
+    if (!email) {
+      newErrors.email = "Email is required"
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address"
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required"
+    } else if (password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters"
+    } else if (!/\d/.test(password)) {
+      newErrors.password = "Password must contain at least one number"
+    } else if (!/[A-Z]/.test(password)) {
+      newErrors.password = "Password must contain at least one uppercase letter"
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password"
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateForm()) return
+
+    setIsLoading(true)
+    setErrors({})
+
+    // Small delay for UX
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
+    const result = registerUser(fullName, email, password)
+
+    if (result.success) {
+      router.push("/dashboard")
+    } else {
+      setErrors({ general: result.error || "Registration failed. Please try again." })
+      setIsLoading(false)
+    }
+  }
