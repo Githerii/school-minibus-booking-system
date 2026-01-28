@@ -197,6 +197,13 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Bus updated"}), 200
     
+    @app.delete("/buses/<int:bus_id>")
+    def delete_bus(bus_id):
+        bus = Bus.query.get_or_404(bus_id)
+        db.session.delete(bus)
+        db.session.commit()
+        return jsonify({"message": "Bus deleted"}), 200
+    
     #CRUD for Bookings
     @app.post("/bookings")
     def create_booking():
