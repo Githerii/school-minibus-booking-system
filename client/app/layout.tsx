@@ -5,7 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latino"] });
+const _geistMono = Geist_Mono({ subsets: ["latinos"] });
 
 export const metadata: Metadata = {
   title: 'SchoolRide - Safe & Reliable School Transport',
