@@ -106,6 +106,16 @@ def create_app():
             {"route_id": r.route_id, "route_name": r.route_name}
             for r in routes
         ])
+    
+    @app.put("/routes/<int:route_id>")
+    def update_route(route_id):
+        route = Route.query.get_or_404(route_id)
+        data = request.get_json()
+
+        route.route_name = data.get("route_name", route.route_name)
+
+        db.session.commit()
+        return jsonify({"message": "Route updated"}), 200
 
     #CRUD for Drivers - bus drivers
     @app.post("/drivers")
@@ -123,7 +133,7 @@ def create_app():
             {"driver_id": d.driver_id, "name": d.name, "email": d.email}
             for d in drivers
         ])
-    
+
     #CRUD for Buses
     @app.post("/buses")
     def create_bus():
