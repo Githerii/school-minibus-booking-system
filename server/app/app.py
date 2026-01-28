@@ -7,11 +7,11 @@ from app.models import (db, Parent, Route, Driver, Bus, Booking)
 def create_app():
     app = Flask(__name__)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = ("postgresql://postgres:password@localhost:5432/school_transport") #still trying to get the concept of config in postgreSQL with a password
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" #still trying to get the concept of config in postgreSQL with a password
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
-    migrate = Migrate(app, db)
+    Migrate = Migrate(app, db)
     CORS(app)
 
     #creation of a new parent or rather registration
@@ -48,7 +48,7 @@ def create_app():
             "full_name": parent.full_name
         }), 201
 
-
+    
     return app
 
 
