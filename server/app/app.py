@@ -185,6 +185,18 @@ def create_app():
             for b in buses
         ])
     
+    @app.put("/buses/<int:bus_id>")
+    def update_bus(bus_id):
+        bus = Bus.query.get_or_404(bus_id)
+        data = request.get_json()
+
+        bus.plate_number = data.get("plate_number", bus.plate_number)
+        bus.route_id = data.get("route_id", bus.route_id)
+        bus.driver_id = data.get("driver_id", bus.driver_id)
+
+        db.session.commit()
+        return jsonify({"message": "Bus updated"}), 200
+    
     #CRUD for Bookings
     @app.post("/bookings")
     def create_booking():
