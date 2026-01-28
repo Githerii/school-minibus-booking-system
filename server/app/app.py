@@ -140,6 +140,17 @@ def create_app():
             {"driver_id": d.driver_id, "name": d.name, "email": d.email}
             for d in drivers
         ])
+    
+    @app.put("/drivers/<int:driver_id>")
+    def update_driver(driver_id):
+        driver = Driver.query.get_or_404(driver_id)
+        data = request.get_json()
+
+        driver.name = data.get("name", driver.name)
+        driver.email = data.get("email", driver.email)
+
+        db.session.commit()
+        return jsonify({"message": "Driver updated"}), 200
 
     #CRUD for Buses
     @app.post("/buses")
