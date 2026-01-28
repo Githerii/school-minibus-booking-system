@@ -125,6 +125,21 @@ def create_app():
             for b in buses
         ])
     
+    #CRUD for Bookings
+    @app.post("/bookings")
+    def create_booking():
+        data = request.get_json()
+        booking = Booking(
+            parent_id=data["parent_id"],
+            bus_id=data["bus_id"],
+            pickup_point=data["pickup_point"],
+            dropoff_point=data["dropoff_point"]
+        )
+        db.session.add(booking)
+        db.session.commit()
+        return jsonify({"message": "Booking created"}), 201
+    
+    
     return app
 
 
