@@ -56,7 +56,7 @@ export default function LoginPage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
     
-    // Example error state for demonstration
+    // Example error state for demonstratio
     
     
     setIsLoading(false)
