@@ -26,3 +26,43 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {}
+
+    if (!email) {
+      newErrors.email = "Email is required"
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address"
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required"
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!validateForm()) return
+
+    setIsLoading(true)
+    setErrors({})
+
+    // Small delay for UX
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    
+    const result = loginUser(email, password)
+    
+    if (result.success) {
+      router.push("/dashboard")
+    } else {
+      setErrors({ general: result.error || "Invalid email or password" })
+      setIsLoading(false)
+    }
+  }
