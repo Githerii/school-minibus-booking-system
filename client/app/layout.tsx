@@ -5,7 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _geistMono = Geist_Mono({ subsets: ["latino"] });
 
 export const metadata: Metadata = {
   title: 'SchoolRide - Safe & Reliable School Transport',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        
+        url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
       },
       {
