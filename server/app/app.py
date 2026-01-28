@@ -76,11 +76,29 @@ def create_app():
     @app.post("/routes")
     def create_route():
         data = request.get_json()
-        route = Route(route_name=data["route_name"])
+
+        if not data or not data.get("route_name"):
+            return jsonify({"error": "Invalid request"}), 400
+        
+        required_fields = ["route_name", "start_location", "end_location"]
+
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        route = Route(
+            route_name=data["route_name"],
+            start_location=data["start_location"],
+            end_location=data["end_location"]
+        )
         db.session.add(route)
         db.session.commit()
-        return jsonify({"message": "Route created"}), 201
-    
+        return jsonify({
+            "route_id": route.route_id,
+            "route_name": route.route_name,
+            "start_location": route.start_location,
+            "end_location": route.end_location
+        }), 201
+
     @app.get("/routes")
     def get_routes():
         routes = Route.query.all()
