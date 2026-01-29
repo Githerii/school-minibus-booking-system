@@ -16,7 +16,7 @@ def create_app():
 
     #CRUD for routes
     #creation of a new parent or rather registration
-    @app.post("/register")
+    @app.post("/parents")
     def register():
         data = request.get_json()
 
@@ -163,15 +163,24 @@ def create_app():
     @app.post("/buses")
     def create_bus():
         data = request.get_json()
+
+        required_fields = ["plate_number", "route_id", "driver_id"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+
         bus = Bus(
             plate_number=data["plate_number"],
             route_id=data["route_id"],
-            driver_id=data["driver_id"]
+            driver_id=data["driver_id"],
+            capacity=data["capacity"]
         )
         db.session.add(bus)
         db.session.commit()
-        return jsonify({"message": "Bus created"}), 201
-    
+        return jsonify({"bus_id": bus.bus_id,
+                        "plate_number": bus.plate_number,
+                        "capacity": bus.capacity
+                        }), 201
+
     @app.get("/buses")
     def get_buses():
         buses = Bus.query.all()
