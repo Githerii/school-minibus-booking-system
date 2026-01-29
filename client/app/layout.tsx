@@ -1,26 +1,24 @@
-import "./globals.css";
-import { Header } from "../components/header";
-import { Hero } from "@/components/hero";
-import { HowItWorks } from "@/components/how-it-works"
-import { CTA } from "@/components/cta";
-import { Footer} from "@/components/footer";
-import { Features } from "@/components/features";
+import React from "react"
+import type { Metadata } from "next"
+import { GeistSans } from "geist/font"
+import "./globals.css"
+
+export const metadata: Metadata = {
+  title: "SchoolRide - Safe & Reliable School Transport",
+  description:
+    "Book safe and affordable school minibus transport for your children.",
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">
-        <Hero />
-        <Features />
-        <HowItWorks />
-        <CTA />
-      </main>
-      <Footer />
-    </div>
-  );
+    <html lang="en">
+      <body className={`${GeistSans.className} antialiased`}>
+        {children}
+      </body>
+    </html>
+  )
 }
