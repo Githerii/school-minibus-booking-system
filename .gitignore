@@ -22,6 +22,7 @@ pipenv/
 instance/
 *.sqlite3
 *.db
+server/instance/school_transport.db
 
 # =========================
 # Flask-Migrate
