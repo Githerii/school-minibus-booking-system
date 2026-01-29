@@ -4,6 +4,7 @@ import React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Bus, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,8 +17,11 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { API_BASE_URL } from "@/lib/api"
 
 export default function LoginPage() {
+  const router = useRouter()
+
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -45,21 +49,44 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) return
 
     setIsLoading(true)
     setErrors({})
 
-    
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    
-    // Example error state for demonstratio
-    
-    
-    setIsLoading(false)
+    try {
+      const res = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErrors({
+          general: data.error || "Invalid email or password",
+        })
+        return
+      }
+
+      // TEMP: store parent_id
+      localStorage.setItem("parent_id", data.parent_id)
+
+      router.push("/dashboard") // or "/" for now
+    } catch {
+      setErrors({
+        general: "Unable to connect to server. Please try again.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -91,7 +118,7 @@ export default function LoginPage() {
                   {errors.general}
                 </div>
               )}
-              
+
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
