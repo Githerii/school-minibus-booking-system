@@ -37,7 +37,7 @@ def create_app():
         parent = Parent(
             email=email,
             full_name=full_name,
-            password_hash=generate_password_hash(password)
+            password_hash = generate_password_hash(password, method="pbkdf2:sha256")
         )
 
         db.session.add(parent)
