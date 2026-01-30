@@ -4,6 +4,7 @@ import React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Bus, Eye, EyeOff, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { API_BASE_URL } from "@/lib/api"
 
 interface FormErrors {
   fullName?: string
@@ -26,6 +28,9 @@ interface FormErrors {
 }
 
 export default function RegisterPage() {
+
+  const router =useRouter()
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [fullName, setFullName] = useState("")
@@ -76,7 +81,7 @@ export default function RegisterPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!validateForm()) return
@@ -84,20 +89,40 @@ export default function RegisterPage() {
     setIsLoading(true)
     setErrors({})
 
-  
-   
-   
-    
+    try {
+      const res = await fetch(`${API_BASE_URL}/parents`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          full_name: fullName,
+          email,
+          password,
+        }),
+      })
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+      const data = await res.json()
 
-    
-    
+      if (!res.ok) {
+        setErrors({
+          general: data.error || "Registration failed",
+        })
+        return
+      }
 
-    setIsLoading(false)
+      // Temporary storage until JWT is added
+      localStorage.setItem("parent_id", data.parent_id)
+
+      router.push("/login")
+    } catch {
+      setErrors({
+        general: "Unable to connect to server. Please try again.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md">
