@@ -1,7 +1,12 @@
 import React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font"
+import { Inter } from "next/font/google"
 import "./globals.css"
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+})
 
 export const metadata: Metadata = {
   title: "SchoolRide - Safe & Reliable School Transport",
@@ -16,9 +21,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${GeistSans.className} antialiased`}>
+      <body className={`${inter.variable} antialiased`}>
         {children}
-
       </body>
     </html>
   )

@@ -43,7 +43,7 @@ class Bus(db.Model):
     driver_id = db.Column(db.Integer, db.ForeignKey("drivers.driver_id"), nullable=False)
     plate_number = db.Column(db.String, unique=True, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
-    gps_coordinates= db.Column(db.String)
+    gps_coordinates= db.Column(db.String, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     route = db.relationship("Route", back_populates="buses")

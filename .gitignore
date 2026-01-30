@@ -1,5 +1,50 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# =========================
+# Virtual Environments
+# =========================
+.venv/
+venv/
+env/
+ENV/
+.virtualenv/
+pipenv/
+
+# =========================
+# Flask / SQLAlchemy
+# =========================
+instance/
+*.sqlite3
+*.db
+
+
+# =========================
+# Flask-Migrate
+# =========================
+migrations/__pycache__/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+*.env
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# OS / E
 # Dependencies
-node_modules/
+**/node_modules/
 .pnp
 .pnp.js
 

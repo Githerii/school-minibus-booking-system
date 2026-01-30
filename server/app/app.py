@@ -7,15 +7,16 @@ from app.models import (db, Parent, Route, Driver, Bus, Booking)
 def create_app():
     app = Flask(__name__)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = ("postgresql://postgres:password@localhost:5432/school_transport") #still trying to get the concept of config in postgreSQL with a password
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" #still trying to get the concept of config in postgreSQL with a password
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
     migrate = Migrate(app, db)
     CORS(app)
 
+    #CRUD for routes
     #creation of a new parent or rather registration
-    @app.post("/register")
+    @app.post("/parents")
     def register():
         data = request.get_json()
 
@@ -36,7 +37,7 @@ def create_app():
         parent = Parent(
             email=email,
             full_name=full_name,
-            password_hash=generate_password_hash(password)
+            password_hash = generate_password_hash(password, method="pbkdf2:sha256")
         )
 
         db.session.add(parent)
@@ -48,9 +49,217 @@ def create_app():
             "full_name": parent.full_name
         }), 201
 
+    #added login 
+    @app.post("/login")
+    def login():
+        data = request.get_json()
+        parent = Parent.query.filter_by(email=data["email"]).first()
 
+        if not parent or not check_password_hash(parent.password_hash, data["password"]):
+            return jsonify({"error": "Invalid credentials"}), 401
+
+        return jsonify({
+            "parent_id": parent.parent_id,
+            "email": parent.email,
+            "full_name": parent.full_name
+        })
+
+    @app.get("/parents")
+    def get_parents():
+        parents = Parent.query.all()
+        return jsonify([
+            {"parent_id": p.parent_id, "email": p.email, "full_name": p.full_name}
+            for p in parents
+        ])
+
+    #CRUD FOR ROUTES
+    @app.post("/routes")
+    def create_route():
+        data = request.get_json()
+
+        if not data or not data.get("route_name"):
+            return jsonify({"error": "Invalid request"}), 400
+        
+        required_fields = ["route_name", "start_location", "end_location"]
+
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        route = Route(
+            route_name=data["route_name"],
+            start_location=data["start_location"],
+            end_location=data["end_location"]
+        )
+        db.session.add(route)
+        db.session.commit()
+        return jsonify({
+            "route_id": route.route_id,
+            "route_name": route.route_name,
+            "start_location": route.start_location,
+            "end_location": route.end_location
+        }), 201
+
+    @app.get("/routes")
+    def get_routes():
+        routes = Route.query.all()
+        return jsonify([
+            {"route_id": r.route_id, "route_name": r.route_name}
+            for r in routes
+        ])
+    
+    @app.put("/routes/<int:route_id>")
+    def update_route(route_id):
+        route = Route.query.get_or_404(route_id)
+        data = request.get_json()
+
+        route.route_name = data.get("route_name", route.route_name)
+
+        db.session.commit()
+        return jsonify({"message": "Route updated"}), 200
+    
+    @app.delete("/routes/<int:route_id>")
+    def delete_route(route_id):
+        route = Route.query.get_or_404(route_id)
+        db.session.delete(route)
+        db.session.commit()
+        return jsonify({"message": "Route deleted"}), 200
+
+    #CRUD for Drivers - bus drivers
+    @app.post("/drivers")
+    def create_driver():
+        data = request.get_json()
+        driver = Driver(name=data["name"], email=data["email"])
+        db.session.add(driver)
+        db.session.commit()
+        return jsonify({"message": "Driver created"}), 201
+
+    @app.get("/drivers")
+    def get_drivers():
+        drivers = Driver.query.all()
+        return jsonify([
+            {"driver_id": d.driver_id, "name": d.name, "email": d.email}
+            for d in drivers
+        ])
+    
+    @app.put("/drivers/<int:driver_id>")
+    def update_driver(driver_id):
+        driver = Driver.query.get_or_404(driver_id)
+        data = request.get_json()
+
+        driver.name = data.get("name", driver.name)
+        driver.email = data.get("email", driver.email)
+
+        db.session.commit()
+        return jsonify({"message": "Driver updated"}), 200
+    
+    @app.delete("/drivers/<int:driver_id>")
+    def delete_driver(driver_id):
+        driver = Driver.query.get_or_404(driver_id)
+        db.session.delete(driver)
+        db.session.commit()
+        return jsonify({"message": "Driver deleted"}), 200
+
+    #CRUD for Buses
+    @app.post("/buses")
+    def create_bus():
+        data = request.get_json()
+
+        required_fields = ["plate_number", "route_id", "driver_id"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        bus = Bus(
+            plate_number=data["plate_number"],
+            route_id=data["route_id"],
+            driver_id=data["driver_id"],
+            capacity=data["capacity"]
+        )
+        db.session.add(bus)
+        db.session.commit()
+        return jsonify({"bus_id": bus.bus_id,
+                        "plate_number": bus.plate_number,
+                        "capacity": bus.capacity
+                        }), 201
+
+    @app.get("/buses")
+    def get_buses():
+        buses = Bus.query.all()
+        return jsonify([
+            {
+                "bus_id": b.bus_id,
+                "plate_number": b.plate_number,
+                "route": b.route.route_name,
+                "driver": b.driver.name
+            }
+            for b in buses
+        ])
+    
+    @app.put("/buses/<int:bus_id>")
+    def update_bus(bus_id):
+        bus = Bus.query.get_or_404(bus_id)
+        data = request.get_json()
+
+        bus.plate_number = data.get("plate_number", bus.plate_number)
+        bus.route_id = data.get("route_id", bus.route_id)
+        bus.driver_id = data.get("driver_id", bus.driver_id)
+
+        db.session.commit()
+        return jsonify({"message": "Bus updated"}), 200
+    
+    @app.delete("/buses/<int:bus_id>")
+    def delete_bus(bus_id):
+        bus = Bus.query.get_or_404(bus_id)
+        db.session.delete(bus)
+        db.session.commit()
+        return jsonify({"message": "Bus deleted"}), 200
+    
+    #CRUD for Bookings
+    @app.post("/bookings")
+    def create_booking():
+        data = request.get_json()
+        booking = Booking(
+            parent_id=data["parent_id"],
+            bus_id=data["bus_id"],
+            pickup_point=data["pickup_point"],
+            dropoff_point=data["dropoff_point"]
+        )
+        db.session.add(booking)
+        db.session.commit()
+        return jsonify({"message": "Booking created"}), 201
+    
+    @app.get("/bookings")
+    def get_bookings():
+        bookings = Booking.query.all()
+        return jsonify([
+            {
+                "booking_id": b.booking_id,
+                "parent": b.parent.full_name,
+                "bus": b.bus.plate_number,
+                "pickup": b.pickup_point,
+                "dropoff": b.dropoff_point
+            }
+            for b in bookings
+        ])
+    
+    @app.put("/bookings/<int:booking_id>")
+    def update_booking(booking_id):
+        booking = Booking.query.get_or_404(booking_id)
+        data = request.get_json()
+
+        booking.pickup_point = data.get("pickup_point", booking.pickup_point)
+        booking.dropoff_point = data.get("dropoff_point", booking.dropoff_point)
+        booking.bus_id = data.get("bus_id", booking.bus_id)
+
+        db.session.commit()
+        return jsonify({"message": "Booking updated"}), 200
+    
+    @app.delete("/bookings/<int:booking_id>")
+    def delete_booking(booking_id):
+        booking = Booking.query.get_or_404(booking_id)
+        db.session.delete(booking)
+        db.session.commit()
+        return jsonify({"message": "Booking deleted"}), 200
+    
     return app
-
-
 
 app = create_app()
