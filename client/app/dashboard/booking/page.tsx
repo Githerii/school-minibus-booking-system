@@ -69,27 +69,8 @@ const bookings = [
     dropoffTime: "5:00 PM",
     status: "pending",
     pickupLocation: "Greenwood Elementary",
-  },
-  {
-    id: "BK004",
-    childName: "Liam Johnson",
-    route: "Weekend Sports - Route D",
-    date: "2026-01-25",
-    pickupTime: "9:00 AM",
-    dropoffTime: "12:00 PM",
-    status: "completed",
-    pickupLocation: "123 Oak Street",
-  },
-  {
-    id: "BK005",
-    childName: "Emma Johnson",
-    route: "Field Trip - Museum",
-    date: "2026-01-20",
-    pickupTime: "8:00 AM",
-    dropoffTime: "2:30 PM",
-    status: "cancelled",
-    pickupLocation: "Greenwood Elementary",
-  },
+  }
+ 
 ]
 
 function getStatusBadge(status: string) {

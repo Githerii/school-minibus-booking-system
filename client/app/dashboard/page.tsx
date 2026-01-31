@@ -20,7 +20,7 @@ export default function DashboardPage() {
         <Button asChild>
           <Link href="/dashboard/book">
             <Plus className="mr-2 size-4" />
-            Book New Route
+            Book A Ride
           </Link>
         </Button>
       </div>
