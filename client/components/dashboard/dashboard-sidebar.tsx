@@ -28,51 +28,27 @@ import {
 } from "@/components/ui/sidebar"
 
 const mainNavItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "My Bookings",
-    href: "/dashboard/bookings",
-    icon: CalendarDays,
-  },
-  {
-    title: "Routes",
-    href: "/dashboard/routes",
-    icon: MapPin,
-  },
-  {
-    title: "Book a Ride",
-    href: "/dashboard/book",
-    icon: Bus,
-  },
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "My Bookings", href: "/dashboard/bookings", icon: CalendarDays },
+  { title: "Routes", href: "/dashboard/routes", icon: MapPin },
+  { title: "Book a Ride", href: "/dashboard/book", icon: Bus },
 ]
 
 const accountNavItems = [
-  {
-    title: "Profile",
-    href: "/dashboard/profile",
-    icon: User,
-  },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
-  {
-    title: "Help & Support",
-    href: "/dashboard/help",
-    icon: HelpCircle,
-  },
+  { title: "Profile", href: "/dashboard/profile", icon: User },
+  { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Help & Support", href: "/dashboard/help", icon: HelpCircle },
 ]
 
 export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sidebar>
+    <Sidebar
+      variant="sidebar"
+      collapsible="none"
+      className="relative w-[260px] shrink-0 border-r"
+    >
       <SidebarHeader className="p-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-md bg-primary">
