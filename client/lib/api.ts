@@ -36,3 +36,22 @@ export async function getAdminRoutes(): Promise<AdminRoute[]> {
 
   return res.json();
 }
+
+export async function createAdminRoute(payload: {
+  name: string;
+  startLocation: string;
+  endLocation: string;
+  status: "active" | "inactive";
+}) {
+  const res = await fetchWithAuth("/admin/routes", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || "Failed to create route");
+  }
+
+  return res.json(); // returns the route that has been created
+}
