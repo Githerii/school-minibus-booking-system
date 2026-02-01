@@ -23,6 +23,7 @@ class Route(db.Model):
     route_name = db.Column(db.String)
     start_location = db.Column(db.String, nullable=False)
     end_location = db.Column(db.String, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="active")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     buses = db.relationship("Bus", back_populates="route")
