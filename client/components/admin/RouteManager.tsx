@@ -14,9 +14,15 @@ interface Route {
 
 interface RouteManagerProps {
   routes: Route[];
+  onAddRoute: (data: {
+    name: string;
+    startLocation: string;
+    endLocation: string;
+    status: "active" | "inactive";
+  }) => void;
 }
-export default function RouteManager({ routes }: RouteManagerProps) {
-  
+export default function RouteManager({ routes, onAddRoute }: RouteManagerProps) {
+
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingRoute, setEditingRoute] = useState<Route | null>(null)
@@ -34,25 +40,20 @@ export default function RouteManager({ routes }: RouteManagerProps) {
   )
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingRoute) {
-      setRoutes(routes.map(r =>
-        r.id === editingRoute.id
-          ? { ...r, ...formData }
-          : r
-      ))
-    } else {
-      const newRoute: Route = {
-        id: Math.max(...routes.map(r => r.id)) + 1,
-        ...formData,
-        busCount: 0,
-      }
-      setRoutes([...routes, newRoute])
-    }
-    setShowModal(false)
-    setEditingRoute(null)
-    setFormData({ name: '', startLocation: '', endLocation: '', status: 'active' })
-  }
+    e.preventDefault();
+
+    onAddRoute(formData);
+
+    setShowModal(false);
+    setEditingRoute(null);
+    setFormData({
+      name: "",
+      startLocation: "",
+      endLocation: "",
+      status: "active",
+    });
+  };
+
 
   const handleEdit = (route: Route) => {
     setEditingRoute(route)
