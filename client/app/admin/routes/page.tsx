@@ -2,30 +2,53 @@
 
 import { useEffect, useState } from "react";
 import RouteManager from "@/components/admin/RouteManager";
-import { getAdminRoutes, AdminRoute } from "@/lib/api";
+import { getAdminRoutes, createAdminRoute } from "@/lib/api";
 
 export default function AdminRoutesPage() {
-  const [routes, setRoutes] = useState<AdminRoute[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadRoutes() {
-      try {
-        const data = await getAdminRoutes();
-        setRoutes(data);
-      } catch (err) {
-        setError("Failed to load routes");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadRoutes();
+    getAdminRoutes()
+      .then(setRoutes)
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p>Loading routes…</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  async function handleAddRoute(data: {
+    name: string;
+    startLocation: string;
+    endLocation: string;
+    status: "active" | "inactive";
+  }) {
+    // this is an optimistic route
+    const tempRoute = {
+      id: Date.now(), // temp id
+      busCount: 0,
+      ...data,
+    };
 
-  return <RouteManager routes={routes} />;
+    setRoutes((prev) => [tempRoute, ...prev]);
+
+    try {
+      const saved = await createAdminRoute(data);
+
+      // replaces temp route with a real one
+      setRoutes((prev) =>
+        prev.map((r) => (r.id === tempRoute.id ? saved : r))
+      );
+    } catch (err) {
+      // this is a rollback
+      setRoutes((prev) => prev.filter((r) => r.id !== tempRoute.id));
+      alert("Failed to create route");
+    }
+  }
+
+  if (loading) return <p>Loading routes…</p>;
+
+  return (
+    <RouteManager
+      routes={routes}
+      onAddRoute={handleAddRoute}
+    />
+  );
 }
