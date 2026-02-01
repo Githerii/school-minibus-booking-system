@@ -1,6 +1,13 @@
-from flask import Flask, request, jsonify
+import token
+from flask import Flask, app, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+
+from app.utils.auth import admin_required
+
+
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import (db, Parent, Route, Driver, Bus, Booking)
 
@@ -9,6 +16,8 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" #still trying to get the concept of config in postgreSQL with a password
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["JWT_SECRET_KEY"] = "super-secret-change-this"
+    jwt = JWTManager(app)
 
     db.init_app(app)
     migrate = Migrate(app, db)
@@ -50,6 +59,7 @@ def create_app():
         }), 201
 
     #added login 
+    #this has been updated for JWT
     @app.post("/login")
     def login():
         data = request.get_json()
@@ -58,11 +68,15 @@ def create_app():
         if not parent or not check_password_hash(parent.password_hash, data["password"]):
             return jsonify({"error": "Invalid credentials"}), 401
 
+        token = create_access_token(
+        identity=str(parent.parent_id),
+        additional_claims={"role": parent.role}
+    )
+
         return jsonify({
-            "parent_id": parent.parent_id,
-            "email": parent.email,
-            "full_name": parent.full_name
-        })
+            "access_token": token,
+            "role": parent.role
+        }), 200
 
     @app.get("/parents")
     def get_parents():
@@ -71,6 +85,35 @@ def create_app():
             {"parent_id": p.parent_id, "email": p.email, "full_name": p.full_name}
             for p in parents
         ])
+    
+
+    # for specifically getting only the admin
+    @app.get("/admin/parents")
+    @admin_required
+    def get_all_parents():
+        parents = Parent.query.all()
+        return jsonify([
+            {
+                "id": p.parent_id,
+                "email": p.email,
+                "full_name": p.full_name,
+                "role": p.role
+            }
+            for p in parents
+        ])
+    
+    #This lets frontend verify identityy using JWT
+    @app.get("/me")
+    @jwt_required()
+    def me():
+        user_id = get_jwt_identity()
+        claims = get_jwt()
+
+        return {
+            "id": user_id,
+            "role": claims.get("role")
+        }
+
 
     #CRUD FOR ROUTES
     @app.post("/routes")
@@ -98,6 +141,36 @@ def create_app():
             "start_location": route.start_location,
             "end_location": route.end_location
         }), 201
+    
+    #admin POST end point
+    @app.post("/admin/routes")
+    @admin_required
+    def admin_create_route():
+        data = request.get_json()
+
+        required_fields = ["name", "startLocation", "endLocation"]
+        if not data or not all(f in data for f in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+
+        route = Route(
+            route_name=data["name"],
+            start_location=data["startLocation"],
+            end_location=data["endLocation"],
+            status=data.get("status", "active")
+        )
+
+        db.session.add(route)
+        db.session.commit()
+
+        return jsonify({
+            "id": route.route_id,
+            "name": route.route_name,
+            "startLocation": route.start_location,
+            "endLocation": route.end_location,
+            "status": route.status,
+            "busCount": 0
+        }), 201
+
 
     @app.get("/routes")
     def get_routes():
@@ -106,6 +179,24 @@ def create_app():
             {"route_id": r.route_id, "route_name": r.route_name}
             for r in routes
         ])
+    
+    #Admin Get endpoint
+    @app.get("/admin/routes")
+    @admin_required
+    def admin_get_routes():
+        routes = Route.query.all()
+        return jsonify([
+            {
+                "id": r.route_id,
+                "name": r.route_name,
+                "startLocation": r.start_location,
+                "endLocation": r.end_location,
+                "status": r.status,
+                "busCount": len(r.buses) if hasattr(r, "buses") else 0
+            }
+            for r in routes
+        ])
+
     
     @app.put("/routes/<int:route_id>")
     def update_route(route_id):
@@ -117,12 +208,40 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Route updated"}), 200
     
+    #admin put endpoint
+    @app.put("/admin/routes/<int:route_id>")
+    @admin_required
+    def admin_update_route(route_id):
+        route = Route.query.get_or_404(route_id)
+        data = request.get_json()
+
+        route.route_name = data.get("name", route.route_name)
+        route.start_location = data.get("startLocation", route.start_location)
+        route.end_location = data.get("endLocation", route.end_location)
+        route.status = data.get("status", route.status)
+
+        db.session.commit()
+
+        return jsonify({"message": "Route updated"}), 200
+    
+
     @app.delete("/routes/<int:route_id>")
     def delete_route(route_id):
         route = Route.query.get_or_404(route_id)
         db.session.delete(route)
         db.session.commit()
         return jsonify({"message": "Route deleted"}), 200
+    
+    #admin delete endpoint
+    @app.delete("/admin/routes/<int:route_id>")
+    @admin_required
+    def admin_delete_route(route_id):
+        route = Route.query.get_or_404(route_id)
+        db.session.delete(route)
+        db.session.commit()
+
+        return jsonify({"message": "Route deleted"}), 200
+    
 
     #CRUD for Drivers - bus drivers
     @app.post("/drivers")
