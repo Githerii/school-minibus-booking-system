@@ -12,15 +12,11 @@ interface Route {
   busCount: number
 }
 
-export default function RouteManager() {
-  const [routes, setRoutes] = useState<Route[]>([
-    { id: 1, name: 'Route A - Downtown', startLocation: 'Central Station', endLocation: 'School', status: 'active', busCount: 3 },
-    { id: 2, name: 'Route B - Suburbs', startLocation: 'Westside Mall', endLocation: 'School', status: 'active', busCount: 2 },
-    { id: 3, name: 'Route C - Eastside', startLocation: 'East Park', endLocation: 'School', status: 'active', busCount: 4 },
-    { id: 4, name: 'Route D - North', startLocation: 'Northgate', endLocation: 'School', status: 'inactive', busCount: 0 },
-    { id: 5, name: 'Route E - South', startLocation: 'Southville', endLocation: 'School', status: 'active', busCount: 2 },
-  ])
-
+interface RouteManagerProps {
+  routes: Route[];
+}
+export default function RouteManager({ routes }: RouteManagerProps) {
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingRoute, setEditingRoute] = useState<Route | null>(null)
