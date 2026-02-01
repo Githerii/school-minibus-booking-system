@@ -49,7 +49,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
     if (!validateForm()) return
 
     setIsLoading(true)
@@ -118,7 +117,6 @@ export default function LoginPage() {
                   {errors.general}
                 </div>
               )}
-
               <div className="flex flex-col gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
