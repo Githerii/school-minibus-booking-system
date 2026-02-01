@@ -1,1 +1,38 @@
 export const API_BASE_URL = "http://localhost:5000"
+
+export async function fetchWithAuth(
+  endpoint: string,
+  options: RequestInit = {}
+) {
+  const token = localStorage.getItem("token")
+
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
+
+  return fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  })
+}
+
+export interface AdminRoute {
+  id: number;
+  name: string;
+  startLocation: string;
+  endLocation: string;
+  status: "active" | "inactive";
+  busCount: number;
+}
+
+export async function getAdminRoutes(): Promise<AdminRoute[]> {
+  const res = await fetchWithAuth("/admin/routes");
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch routes");
+  }
+
+  return res.json();
+}
