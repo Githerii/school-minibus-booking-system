@@ -87,3 +87,48 @@ export async function deleteAdminRoute(id: number) {
     throw new Error("Failed to delete route");
   }
 }
+
+export interface AdminDriver {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export async function getAdminDrivers(): Promise<AdminDriver[]> {
+  const res = await fetchWithAuth("/admin/drivers");
+  if (!res.ok) throw new Error("Failed to fetch drivers");
+  return res.json();
+}
+
+export async function createAdminDriver(payload: {
+  name: string;
+  email: string;
+}) {
+  const res = await fetchWithAuth("/admin/drivers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create driver");
+  return res.json();
+}
+
+export async function updateAdminDriver(
+  id: number,
+  payload: { name: string; email: string }
+) {
+  const res = await fetchWithAuth(`/admin/drivers/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update driver");
+}
+
+export async function deleteAdminDriver(id: number) {
+  const res = await fetchWithAuth(`/admin/drivers/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete driver");
+}
