@@ -244,3 +244,20 @@ export async function deleteAdminBooking(id: number) {
 
   if (!res.ok) throw new Error("Failed to delete booking");
 }
+
+export interface AdminParent {
+  id: number;
+  full_name: string;
+  email: string;
+  role: string;
+}
+
+export async function getAdminParents(): Promise<AdminParent[]> {
+  const res = await fetchWithAuth("/admin/parents");
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch parents");
+  }
+
+  return res.json();
+}
