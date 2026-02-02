@@ -14,14 +14,18 @@ interface Route {
 
 interface RouteManagerProps {
   routes: Route[];
-  onAddRoute: (data: {
-    name: string;
-    startLocation: string;
-    endLocation: string;
-    status: "active" | "inactive";
-  }) => void;
+  onAddRoute: (data: any) => void;
+  onUpdateRoute: (id: number, data: any) => void;
+  onDeleteRoute: (id: number) => void;
 }
-export default function RouteManager({ routes, onAddRoute }: RouteManagerProps) {
+
+export default function RouteManager({
+  routes,
+  onAddRoute,
+  onUpdateRoute,
+  onDeleteRoute,
+}: RouteManagerProps) {
+
 
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -33,16 +37,29 @@ export default function RouteManager({ routes, onAddRoute }: RouteManagerProps) 
     status: 'active' as const,
   })
 
-  const filteredRoutes = routes.filter(route =>
-    route.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    route.startLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    route.endLocation.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredRoutes = routes.filter((route) => {
+    const name = route.name ?? "";
+    const start = route.startLocation ?? "";
+    const end = route.endLocation ?? "";
+
+    const term = searchTerm.toLowerCase();
+
+    return (
+      name.toLowerCase().includes(term) ||
+      start.toLowerCase().includes(term) ||
+      end.toLowerCase().includes(term)
+    );
+  });
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    onAddRoute(formData);
+    if (editingRoute) {
+      onUpdateRoute(editingRoute.id, formData);
+    } else {
+      onAddRoute(formData);
+    }
 
     setShowModal(false);
     setEditingRoute(null);
@@ -66,11 +83,6 @@ export default function RouteManager({ routes, onAddRoute }: RouteManagerProps) 
     setShowModal(true)
   }
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this route?')) {
-      setRoutes(routes.filter(r => r.id !== id))
-    }
-  }
 
   return (
     <div>
@@ -143,8 +155,12 @@ export default function RouteManager({ routes, onAddRoute }: RouteManagerProps) 
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(route.id)}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                        onClick={() => {
+                          if (confirm("Delete this route?")) {
+                            onDeleteRoute(route.id);
+                          }
+                        }}
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

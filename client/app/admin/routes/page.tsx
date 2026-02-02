@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import RouteManager from "@/components/admin/RouteManager";
-import { getAdminRoutes, createAdminRoute } from "@/lib/api";
+import {
+  getAdminRoutes,
+  createAdminRoute,
+  updateAdminRoute,
+  deleteAdminRoute,
+} from "@/lib/api";
+
 
 export default function AdminRoutesPage() {
   const [routes, setRoutes] = useState<any[]>([]);
@@ -13,7 +19,7 @@ export default function AdminRoutesPage() {
       .then(setRoutes)
       .finally(() => setLoading(false));
   }, []);
-
+  
   async function handleAddRoute(data: {
     name: string;
     startLocation: string;
@@ -22,7 +28,7 @@ export default function AdminRoutesPage() {
   }) {
     // this is an optimistic route
     const tempRoute = {
-      id: Date.now(), // temp id
+      id: Date.now(), // this is liek a temporary id
       busCount: 0,
       ...data,
     };
@@ -43,12 +49,54 @@ export default function AdminRoutesPage() {
     }
   }
 
+  async function handleUpdateRoute(
+    id: number,
+    data: {
+        name: string;
+        startLocation: string;
+        endLocation: string;
+        status: "active" | "inactive";
+    }
+    ) {
+    const previousRoutes = routes;
+
+    setRoutes((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...data } : r))
+    );
+
+    try {
+        const updated = await updateAdminRoute(id, data);
+
+        setRoutes((prev) =>
+        prev.map((r) => (r.id === id ? updated : r))
+        );
+    } catch (err) {
+        setRoutes(previousRoutes);
+        alert("Failed to update route");
+    }
+  }
+
+
+  async function handleDeleteRoute(id: number) {
+    setRoutes((prev) => prev.filter((r) => r.id !== id));
+
+    try {
+      await deleteAdminRoute(id);
+    } catch (err) {
+      alert("Failed to delete route");
+    }
+  }
+
+
+
   if (loading) return <p>Loading routes…</p>;
 
   return (
     <RouteManager
       routes={routes}
       onAddRoute={handleAddRoute}
+      onUpdateRoute={handleUpdateRoute}
+      onDeleteRoute={handleDeleteRoute}
     />
   );
 }
