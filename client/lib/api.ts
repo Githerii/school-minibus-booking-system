@@ -55,3 +55,35 @@ export async function createAdminRoute(payload: {
 
   return res.json(); // returns the route that has been created
 }
+
+export async function updateAdminRoute(
+  id: number,
+  payload: {
+    name: string;
+    startLocation: string;
+    endLocation: string;
+    status: "active" | "inactive";
+  }
+) {
+  const res = await fetchWithAuth(`/admin/routes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to update route");
+  }
+
+  return res.json();
+}
+
+export async function deleteAdminRoute(id: number) {
+  const res = await fetchWithAuth(`/admin/routes/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete route");
+  }
+}

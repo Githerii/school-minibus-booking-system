@@ -78,7 +78,7 @@ export default function LoginPage() {
       // stores JWT
       localStorage.setItem("token", data.access_token)
 
-      // Redirect based on role
+      // Redirecting of our user based on role
       if (data.role === "admin") {
         router.push("/admin")
       } else {
