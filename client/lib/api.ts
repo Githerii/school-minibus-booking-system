@@ -132,3 +132,59 @@ export async function deleteAdminDriver(id: number) {
 
   if (!res.ok) throw new Error("Failed to delete driver");
 }
+
+export interface AdminBus {
+  id: number;
+  plateNumber: string;
+  capacity: number;
+  routeId: number;
+  routeName: string;
+  driverId: number;
+  driverName: string;
+}
+
+export async function getAdminBuses(): Promise<AdminBus[]> {
+  const res = await fetchWithAuth("/admin/buses");
+  if (!res.ok) throw new Error("Failed to fetch buses");
+  return res.json();
+}
+
+export async function createAdminBus(payload: {
+  plateNumber: string;
+  capacity: number;
+  routeId: number;
+  driverId: number;
+}) {
+  const res = await fetchWithAuth("/admin/buses", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create bus");
+  return res.json();
+}
+
+export async function updateAdminBus(
+  id: number,
+  payload: {
+    plateNumber: string;
+    capacity: number;
+    routeId: number;
+    driverId: number;
+  }
+) {
+  const res = await fetchWithAuth(`/admin/buses/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update bus");
+}
+
+export async function deleteAdminBus(id: number) {
+  const res = await fetchWithAuth(`/admin/buses/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete bus");
+}
