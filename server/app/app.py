@@ -252,6 +252,30 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Driver created"}), 201
 
+    #ADmin Driver POST endpoint
+    @app.post("/admin/drivers")
+    @admin_required
+    def admin_create_driver():
+        data = request.get_json()
+
+        if not data or not data.get("name") or not data.get("email"):
+            return {"error": "Missing required fields"}, 400
+
+        driver = Driver(
+            name=data["name"],
+            email=data["email"]
+        )
+
+        db.session.add(driver)
+        db.session.commit()
+
+        return {
+            "id": driver.driver_id,
+            "name": driver.name,
+            "email": driver.email
+        }, 201
+
+
     @app.get("/drivers")
     def get_drivers():
         drivers = Driver.query.all()
@@ -259,7 +283,23 @@ def create_app():
             {"driver_id": d.driver_id, "name": d.name, "email": d.email}
             for d in drivers
         ])
-    
+    #Admin Drivers GET endpoint
+    @app.get("/admin/drivers")
+    @admin_required
+    def admin_get_drivers():
+        drivers = Driver.query.all()
+
+        return jsonify([
+            {
+                "id": d.driver_id,
+                "name": d.name,
+                "email": d.email
+            }
+            for d in drivers
+        ])
+
+
+
     @app.put("/drivers/<int:driver_id>")
     def update_driver(driver_id):
         driver = Driver.query.get_or_404(driver_id)
@@ -271,12 +311,37 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Driver updated"}), 200
     
+    #Admin driver update endpoint
+
+    @app.put("/admin/drivers/<int:driver_id>")
+    @admin_required
+    def admin_update_driver(driver_id):
+        driver = Driver.query.get_or_404(driver_id)
+        data = request.get_json()
+
+        driver.name = data.get("name", driver.name)
+        driver.email = data.get("email", driver.email)
+
+        db.session.commit()
+
+        return {"message": "Driver updated"}
+
     @app.delete("/drivers/<int:driver_id>")
     def delete_driver(driver_id):
         driver = Driver.query.get_or_404(driver_id)
         db.session.delete(driver)
         db.session.commit()
         return jsonify({"message": "Driver deleted"}), 200
+
+    #Admin driver delete endpoint
+    @app.delete("/admin/drivers/<int:driver_id>")
+    @admin_required
+    def admin_delete_driver(driver_id):
+        driver = Driver.query.get_or_404(driver_id)
+        db.session.delete(driver)
+        db.session.commit()
+
+        return {"message": "Driver deleted"}
 
     #CRUD for Buses
     @app.post("/buses")
