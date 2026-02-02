@@ -461,7 +461,7 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Bus deleted"}), 200
     
-    #Admin Delete endpoiny
+    #Admin Delete bus endpoiny
     @app.delete("/admin/buses/<int:bus_id>")
     @admin_required
     def admin_delete_bus(bus_id):
@@ -486,6 +486,33 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Booking created"}), 201
     
+    #Admin create bookings endpoint
+    @app.post("/admin/bookings")
+    @admin_required
+    def admin_create_booking():
+        data = request.get_json()
+
+        required = ["parentId", "busId", "pickup", "dropoff"]
+        if not all(field in data for field in required):
+            return {"error": "Missing required fields"}, 400
+
+        booking = Booking(
+            parent_id=data["parentId"],
+            bus_id=data["busId"],
+            pickup_point=data["pickup"],
+            dropoff_point=data["dropoff"]
+        )
+
+        db.session.add(booking)
+        db.session.commit()
+
+        return {
+            "id": booking.booking_id,
+            "pickup": booking.pickup_point,
+            "dropoff": booking.dropoff_point
+        }, 201
+
+    
     @app.get("/bookings")
     def get_bookings():
         bookings = Booking.query.all()
@@ -500,6 +527,22 @@ def create_app():
             for b in bookings
         ])
     
+    #Admin GET bookings endpoint
+    @app.get("/admin/bookings")
+    @admin_required
+    def admin_get_bookings():
+        bookings = Booking.query.all()
+        return jsonify([
+            {
+                "booking_id": b.booking_id,
+                "parent": b.parent.full_name,
+                "bus": b.bus.plate_number,
+                "pickup": b.pickup_point,
+                "dropoff": b.dropoff_point
+            }
+            for b in bookings
+        ])
+
     @app.put("/bookings/<int:booking_id>")
     def update_booking(booking_id):
         booking = Booking.query.get_or_404(booking_id)
@@ -511,13 +554,39 @@ def create_app():
 
         db.session.commit()
         return jsonify({"message": "Booking updated"}), 200
-    
+    # Admin update booking endpoint
+    @app.put("/admin/bookings/<int:booking_id>")
+    @admin_required
+    def admin_update_booking(booking_id):
+        booking = Booking.query.get_or_404(booking_id)
+        data = request.get_json()
+
+        booking.bus_id = data.get("busId", booking.bus_id)
+        booking.pickup_point = data.get("pickup", booking.pickup_point)
+        booking.dropoff_point = data.get("dropoff", booking.dropoff_point)
+
+        db.session.commit()
+
+        return {"message": "Booking updated"}
+
+
     @app.delete("/bookings/<int:booking_id>")
     def delete_booking(booking_id):
         booking = Booking.query.get_or_404(booking_id)
         db.session.delete(booking)
         db.session.commit()
         return jsonify({"message": "Booking deleted"}), 200
+    
+    @app.delete("/admin/bookings/<int:booking_id>")
+    @admin_required
+    def admin_delete_booking(booking_id):
+        booking = Booking.query.get_or_404(booking_id)
+
+        db.session.delete(booking)
+        db.session.commit()
+
+        return {"message": "Booking deleted"}
+
     
     return app
 
