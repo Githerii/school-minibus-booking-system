@@ -87,3 +87,177 @@ export async function deleteAdminRoute(id: number) {
     throw new Error("Failed to delete route");
   }
 }
+
+export interface AdminDriver {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export async function getAdminDrivers(): Promise<AdminDriver[]> {
+  const res = await fetchWithAuth("/admin/drivers");
+  if (!res.ok) throw new Error("Failed to fetch drivers");
+  return res.json();
+}
+
+export async function createAdminDriver(payload: {
+  name: string;
+  email: string;
+}) {
+  const res = await fetchWithAuth("/admin/drivers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create driver");
+  return res.json();
+}
+
+export async function updateAdminDriver(
+  id: number,
+  payload: { name: string; email: string }
+) {
+  const res = await fetchWithAuth(`/admin/drivers/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update driver");
+}
+
+export async function deleteAdminDriver(id: number) {
+  const res = await fetchWithAuth(`/admin/drivers/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete driver");
+}
+
+export interface AdminBus {
+  id: number;
+  plateNumber: string;
+  capacity: number;
+  routeId: number;
+  routeName: string;
+  driverId: number;
+  driverName: string;
+}
+
+export async function getAdminBuses(): Promise<AdminBus[]> {
+  const res = await fetchWithAuth("/admin/buses");
+  if (!res.ok) throw new Error("Failed to fetch buses");
+  return res.json();
+}
+
+export async function createAdminBus(payload: {
+  plateNumber: string;
+  capacity: number;
+  routeId: number;
+  driverId: number;
+}) {
+  const res = await fetchWithAuth("/admin/buses", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create bus");
+  return res.json();
+}
+
+export async function updateAdminBus(
+  id: number,
+  payload: {
+    plateNumber: string;
+    capacity: number;
+    routeId: number;
+    driverId: number;
+  }
+) {
+  const res = await fetchWithAuth(`/admin/buses/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update bus");
+}
+
+export async function deleteAdminBus(id: number) {
+  const res = await fetchWithAuth(`/admin/buses/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete bus");
+}
+
+export interface AdminBooking {
+  id: number;
+  parentId: number;
+  parentName: string;
+  busId: number;
+  busPlate: string;
+  pickup: string;
+  dropoff: string;
+}
+
+export async function getAdminBookings(): Promise<AdminBooking[]> {
+  const res = await fetchWithAuth("/admin/bookings");
+  if (!res.ok) throw new Error("Failed to fetch bookings");
+  return res.json();
+}
+
+export async function createAdminBooking(payload: {
+  parentId: number;
+  busId: number;
+  pickup: string;
+  dropoff: string;
+}) {
+  const res = await fetchWithAuth("/admin/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create booking");
+  return res.json();
+}
+
+export async function updateAdminBooking(
+  id: number,
+  payload: {
+    parentId: number;
+    busId: number;
+    pickup: string;
+    dropoff: string;
+  }
+) {
+  const res = await fetchWithAuth(`/admin/bookings/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update booking");
+}
+
+export async function deleteAdminBooking(id: number) {
+  const res = await fetchWithAuth(`/admin/bookings/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete booking");
+}
+
+export interface AdminParent {
+  id: number;
+  full_name: string;
+  email: string;
+  role: string;
+}
+
+export async function getAdminParents(): Promise<AdminParent[]> {
+  const res = await fetchWithAuth("/admin/parents");
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch parents");
+  }
+
+  return res.json();
+}
