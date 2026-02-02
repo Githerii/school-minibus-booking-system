@@ -75,10 +75,15 @@ export default function LoginPage() {
         return
       }
 
-      // TEMP: store parent_id
-      localStorage.setItem("parent_id", data.parent_id)
+      // stores JWT
+      localStorage.setItem("token", data.access_token)
 
-      router.push("/dashboard") // or "/" for now
+      // Redirecting of our user based on role
+      if (data.role === "admin") {
+        router.push("/admin")
+      } else {
+        router.push("/admin")
+      }
     } catch {
       setErrors({
         general: "Unable to connect to server. Please try again.",
