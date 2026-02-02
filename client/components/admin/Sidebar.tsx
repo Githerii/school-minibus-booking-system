@@ -32,7 +32,7 @@ export default function Sidebar() {
             <Bus className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-gray-900">SchoolTrans</h1>
+            <h1 className="font-bold text-gray-900">SchoolTransport</h1>
             <p className="text-xs text-gray-500">Admin Dashboard</p>
           </div>
         </div>
@@ -43,7 +43,9 @@ export default function Sidebar() {
         <ul className="space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href ||
+              pathname.startsWith(item.href + "/");
 
             return (
               <li key={item.href}>
@@ -71,7 +73,10 @@ export default function Sidebar() {
       {/* Logout */}
       <div className="p-4 border-t border-gray-100">
         <button
-          onClick={logout}
+          onClick={() => {
+            logout();
+            router.push("/login");
+          }}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
         >
           <LogOut className="w-5 h-5 text-gray-400" />
