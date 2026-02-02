@@ -188,3 +188,59 @@ export async function deleteAdminBus(id: number) {
 
   if (!res.ok) throw new Error("Failed to delete bus");
 }
+
+export interface AdminBooking {
+  id: number;
+  parentId: number;
+  parentName: string;
+  busId: number;
+  busPlate: string;
+  pickup: string;
+  dropoff: string;
+}
+
+export async function getAdminBookings(): Promise<AdminBooking[]> {
+  const res = await fetchWithAuth("/admin/bookings");
+  if (!res.ok) throw new Error("Failed to fetch bookings");
+  return res.json();
+}
+
+export async function createAdminBooking(payload: {
+  parentId: number;
+  busId: number;
+  pickup: string;
+  dropoff: string;
+}) {
+  const res = await fetchWithAuth("/admin/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create booking");
+  return res.json();
+}
+
+export async function updateAdminBooking(
+  id: number,
+  payload: {
+    parentId: number;
+    busId: number;
+    pickup: string;
+    dropoff: string;
+  }
+) {
+  const res = await fetchWithAuth(`/admin/bookings/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update booking");
+}
+
+export async function deleteAdminBooking(id: number) {
+  const res = await fetchWithAuth(`/admin/bookings/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete booking");
+}
