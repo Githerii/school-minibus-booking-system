@@ -6,19 +6,13 @@ import Header from './Header'
 
 interface DashboardLayoutProps {
   children: ReactNode
-  activeTab: string
-  onTabChange: (tab: string) => void
 }
 
-export default function DashboardLayout({ 
-  children, 
-  activeTab, 
-  onTabChange 
-}: DashboardLayoutProps) {
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={onTabChange} />
+      <Sidebar />
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -35,4 +29,3 @@ export default function DashboardLayout({
     </div>
   )
 }
-
