@@ -1,103 +1,118 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Plus, Search, Edit2, Trash2, Bus, MapPin, Users, X } from 'lucide-react'
+import { useState } from "react";
+import { Plus, Edit2, Trash2, X, Bus, User, MapPin, Users, Search } from "lucide-react";
 
-interface Bus {
-  id: number
-  plateNumber: string
-  capacity: number
-  route?: string
-  driver?: string
-  status: 'active' | 'maintenance' | 'inactive'
-  gpsCoordinates?: string
+interface BusData {
+  id: number;
+  plateNumber: string;
+  capacity: number;
+  routeId: number;
+  driverId: number;
+  routeName?: string;
+  driverName?: string;
 }
 
-export default function BusManager() {
-  const [buses, setBuses] = useState<Bus[]>([
-    { id: 1, plateNumber: 'BUS-001', capacity: 30, route: 'Route A - Downtown', driver: 'Robert Wilson', status: 'active', gpsCoordinates: '40.7128° N, 74.0060° W' },
-    { id: 2, plateNumber: 'BUS-002', capacity: 30, route: 'Route B - Suburbs', driver: 'James Taylor', status: 'active', gpsCoordinates: '40.7200° N, 74.0100° W' },
-    { id: 3, plateNumber: 'BUS-003', capacity: 25, status: 'maintenance' },
-    { id: 4, plateNumber: 'BUS-004', capacity: 30, route: 'Route C - Eastside', driver: 'Michael Brown', status: 'active', gpsCoordinates: '40.7300° N, 73.9950° W' },
-    { id: 5, plateNumber: 'BUS-005', capacity: 35, route: 'Route E - South', driver: 'William Davis', status: 'active', gpsCoordinates: '40.7000° N, 74.0200° W' },
-    { id: 6, plateNumber: 'BUS-006', capacity: 30, status: 'inactive' },
-    { id: 7, plateNumber: 'BUS-007', capacity: 25, status: 'maintenance' },
-  ])
+interface Route {
+  id: number;
+  name: string;
+}
 
-  const [searchTerm, setSearchTerm] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [editingBus, setEditingBus] = useState<Bus | null>(null)
-  const [formData, setFormData] = useState({
-    plateNumber: '',
-    capacity: 30,
-    status: 'active' as const,
-  })
+interface Driver {
+  id: number;
+  name: string;
+}
 
-  const filteredBuses = buses.filter(bus =>
-    bus.plateNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (bus.route && bus.route.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (bus.driver && bus.driver.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
+interface BusManagerProps {
+  buses: BusData[];
+  routes: Route[];
+  drivers: Driver[];
+  onAddBus: (data: any) => void;
+  onUpdateBus: (id: number, data: any) => void;
+  onDeleteBus: (id: number) => void;
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingBus) {
-      setBuses(buses.map(b =>
-        b.id === editingBus.id
-          ? { ...b, ...formData }
-          : b
-      ))
+export default function BusManager({
+  buses,
+  routes,
+  drivers,
+  onAddBus,
+  onUpdateBus,
+  onDeleteBus,
+}: BusManagerProps) {
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<BusData | null>(null);
+  const [form, setForm] = useState({
+    plateNumber: "",
+    capacity: 0,
+    routeId: "",
+    driverId: "",
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredBuses = buses.filter((bus) => {
+    const plate = bus.plateNumber ?? "";
+    const route = bus.routeName ?? "";
+    const driver = bus.driverName ?? "";
+    const term = searchTerm.toLowerCase();
+
+    return (
+      plate.toLowerCase().includes(term) ||
+      route.toLowerCase().includes(term) ||
+      driver.toLowerCase().includes(term)
+    );
+  });
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+
+    const submitData = {
+      plateNumber: form.plateNumber,
+      capacity: Number(form.capacity),
+      routeId: Number(form.routeId),
+      driverId: Number(form.driverId),
+    };
+
+    if (editing) {
+      onUpdateBus(editing.id, submitData);
     } else {
-      const newBus: Bus = {
-        id: Math.max(...buses.map(b => b.id)) + 1,
-        ...formData,
-      }
-      setBuses([...buses, newBus])
+      onAddBus(submitData);
     }
-    setShowModal(false)
-    setEditingBus(null)
-    setFormData({ plateNumber: '', capacity: 30, status: 'active' })
+
+    setShowModal(false);
+    setEditing(null);
+    setForm({ plateNumber: "", capacity: 0, routeId: "", driverId: "" });
   }
 
-  const handleEdit = (bus: Bus) => {
-    setEditingBus(bus)
-    setFormData({
+  function handleEdit(bus: BusData) {
+    setEditing(bus);
+    setForm({
       plateNumber: bus.plateNumber,
       capacity: bus.capacity,
-      status: bus.status,
-    })
-    setShowModal(true)
+      routeId: String(bus.routeId),
+      driverId: String(bus.driverId),
+    });
+    setShowModal(true);
   }
 
-  const handleDelete = (id: number) => {
-    if (confirm('Are you sure you want to delete this bus?')) {
-      setBuses(buses.filter(b => b.id !== id))
-    }
-  }
-
-  const getStatusBadge = (status: Bus['status']) => {
-    const classes = {
-      active: 'badge-success',
-      maintenance: 'badge-warning',
-      inactive: 'badge-info',
-    }
-    const labels = {
-      active: 'Active',
-      maintenance: 'Maintenance',
-      inactive: 'Inactive',
-    }
-    return <span className={`badge ${classes[status]}`}>{labels[status]}</span>
+  function handleCancel() {
+    setShowModal(false);
+    setEditing(null);
+    setForm({ plateNumber: "", capacity: 0, routeId: "", driverId: "" });
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Bus Management</h2>
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Bus Management</h2>
+          <p className="text-gray-500 mt-1">Manage your fleet of buses</p>
+        </div>
         <button
           onClick={() => setShowModal(true)}
-          className="btn btn-primary flex items-center gap-2"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
           Add New Bus
         </button>
       </div>
@@ -111,147 +126,181 @@ export default function BusManager() {
             placeholder="Search buses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
           />
         </div>
       </div>
 
-      {/* Buses Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredBuses.map((bus) => (
-          <div key={bus.id} className="card p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-primary-100 rounded-lg">
-                  <Bus className="w-6 h-6 text-primary-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{bus.plateNumber}</h3>
-                  <p className="text-sm text-gray-500">Capacity: {bus.capacity} seats</p>
-                </div>
-              </div>
-              {getStatusBadge(bus.status)}
-            </div>
-
-            <div className="space-y-3 mb-4">
-              {bus.route && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <span className="truncate">{bus.route}</span>
-                </div>
-              )}
-              {bus.driver && (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Users className="w-4 h-4 text-gray-400" />
-                  {bus.driver}
-                </div>
-              )}
-              {bus.gpsCoordinates && (
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500 mb-1">GPS Location</p>
-                  <p className="text-xs font-mono text-gray-700">{bus.gpsCoordinates}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-              <button
-                onClick={() => handleEdit(bus)}
-                className="btn btn-secondary flex-1 text-sm py-2"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(bus.id)}
-                className="btn btn-danger flex-1 text-sm py-2"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* Buses Table */}
+      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+              <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Plate Number</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Route</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Driver</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Capacity</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {filteredBuses.map((bus) => (
+                <tr key={bus.id} className="hover:bg-blue-50/30 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+                        <Bus className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="font-semibold text-gray-900">{bus.plateNumber}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      {bus.routeName || "Unassigned"}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <User className="w-4 h-4 text-gray-400" />
+                      {bus.driverName || "Unassigned"}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-gray-400" />
+                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                        {bus.capacity} seats
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(bus)}
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+                        title="Edit bus"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Delete bus ${bus.plateNumber}?`)) {
+                            onDeleteBus(bus.id);
+                          }
+                        }}
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
+                        title="Delete bus"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingBus ? 'Edit Bus' : 'Add New Bus'}
+              <h3 className="text-xl font-bold text-gray-900">
+                {editing ? "Edit Bus" : "Add New Bus"}
               </h3>
               <button
-                onClick={() => {
-                  setShowModal(false)
-                  setEditingBus(null)
-                  setFormData({ plateNumber: '', capacity: 30, status: 'active' })
-                }}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                onClick={handleCancel}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={submit} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Plate Number
                   </label>
                   <input
                     type="text"
-                    value={formData.plateNumber}
-                    onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
-                    className="w-full"
-                    placeholder="e.g., BUS-001"
+                    placeholder="e.g., ABC-1234"
+                    value={form.plateNumber}
+                    onChange={(e) => setForm({ ...form, plateNumber: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Capacity (seats)
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Capacity (Seats)
                   </label>
                   <input
                     type="number"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                    className="w-full"
+                    placeholder="e.g., 40"
                     min="1"
-                    max="100"
+                    value={form.capacity || ""}
+                    onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Route
                   </label>
                   <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as Bus['status'] })}
-                    className="w-full"
+                    value={form.routeId}
+                    onChange={(e) => setForm({ ...form, routeId: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
                   >
-                    <option value="active">Active</option>
-                    <option value="maintenance">Maintenance</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="">Select route</option>
+                    {routes.map((route) => (
+                      <option key={route.id} value={route.id}>
+                        {route.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Driver
+                  </label>
+                  <select
+                    value={form.driverId}
+                    onChange={(e) => setForm({ ...form, driverId: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select driver</option>
+                    {drivers.map((driver) => (
+                      <option key={driver.id} value={driver.id}>
+                        {driver.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div className="flex items-center gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowModal(false)
-                    setEditingBus(null)
-                    setFormData({ plateNumber: '', capacity: 30, status: 'active' })
-                  }}
-                  className="btn btn-secondary flex-1"
+                  onClick={handleCancel}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all duration-200"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary flex-1"
+                <button 
+                  type="submit" 
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
                 >
-                  {editingBus ? 'Update Bus' : 'Add Bus'}
+                  {editing ? "Update Bus" : "Add Bus"}
                 </button>
               </div>
             </form>
@@ -259,6 +308,5 @@ export default function BusManager() {
         </div>
       )}
     </div>
-  )
+  );
 }
-
