@@ -292,4 +292,20 @@ export async function createParentBooking(payload: {
   if (!res.ok) throw new Error("Failed to create booking");
   return res.json();
 }
+export async function updateParentBooking(
+  id: number,
+  payload: {
+    pickup_point: string;
+    dropoff_point: string;
+    bus_id: number;
+  }
+) {
+  const res = await fetchWithAuth(`/bookings/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update booking");
+  return res.json();
+}
 
