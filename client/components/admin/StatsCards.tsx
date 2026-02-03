@@ -1,6 +1,6 @@
 'use client'
 
-import { Users, Bus, MapPin, CalendarCheck, TrendingUp, TrendingDown } from 'lucide-react'
+import { Users, Bus, MapPin, CalendarCheck, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react'
 
 interface StatCardProps {
   title: string
@@ -9,195 +9,150 @@ interface StatCardProps {
   changeType?: 'positive' | 'negative' | 'neutral'
   icon: React.ComponentType<{ className?: string }>
   color: 'blue' | 'green' | 'purple' | 'orange'
+  description?: string
+}
+
+interface StatsCardsProps {
+  stats: {
+    buses: number
+    drivers: number
+    routes: number
+    bookings: number
+  }
 }
 
 const colorClasses = {
   blue: {
-    bg: 'bg-blue-50',
-    icon: 'bg-blue-100 text-blue-600',
-    border: 'border-blue-200',
+    bg: 'from-blue-50 to-blue-100/50',
+    iconBg: 'bg-gradient-to-br from-blue-500 to-blue-600',
+    iconRing: 'ring-blue-100',
+    accent: 'text-blue-600',
+    border: 'border-blue-200/50',
   },
   green: {
-    bg: 'bg-green-50',
-    icon: 'bg-green-100 text-green-600',
-    border: 'border-green-200',
+    bg: 'from-emerald-50 to-emerald-100/50',
+    iconBg: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
+    iconRing: 'ring-emerald-100',
+    accent: 'text-emerald-600',
+    border: 'border-emerald-200/50',
   },
   purple: {
-    bg: 'bg-purple-50',
-    icon: 'bg-purple-100 text-purple-600',
-    border: 'border-purple-200',
+    bg: 'from-purple-50 to-purple-100/50',
+    iconBg: 'bg-gradient-to-br from-purple-500 to-purple-600',
+    iconRing: 'ring-purple-100',
+    accent: 'text-purple-600',
+    border: 'border-purple-200/50',
   },
   orange: {
-    bg: 'bg-orange-50',
-    icon: 'bg-orange-100 text-orange-600',
-    border: 'border-orange-200',
+    bg: 'from-orange-50 to-orange-100/50',
+    iconBg: 'bg-gradient-to-br from-orange-500 to-orange-600',
+    iconRing: 'ring-orange-100',
+    accent: 'text-orange-600',
+    border: 'border-orange-200/50',
   },
 }
 
-function StatCard({ title, value, change, changeType = 'neutral', icon: Icon, color }: StatCardProps) {
+function StatCard({ title, value, change, changeType = 'neutral', icon: Icon, color, description }: StatCardProps) {
   const colors = colorClasses[color]
 
   return (
-    <div className="card p-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 mt-2">{value}</p>
+    <div className="group relative bg-white rounded-2xl border border-gray-200/60 p-6 shadow-sm hover:shadow-xl hover:border-gray-300/60 transition-all duration-300 overflow-hidden">
+      <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+      
+      <div className="relative">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+            {description && (
+              <p className="text-xs text-gray-400">{description}</p>
+            )}
+          </div>
+          <div className={`${colors.iconBg} p-3 rounded-xl shadow-lg ring-4 ${colors.iconRing} group-hover:scale-110 transition-transform duration-300`}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-4xl font-bold text-gray-900">{value}</p>
+          
           {change && (
-            <div className="flex items-center gap-1 mt-2">
-              {changeType === 'positive' && <TrendingUp className="w-4 h-4 text-green-500" />}
-              {changeType === 'negative' && <TrendingDown className="w-4 h-4 text-red-500" />}
-              <span className={`text-sm font-medium ${
-                changeType === 'positive' ? 'text-green-600' : 
-                changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-full ${
+                changeType === 'positive' ? 'bg-green-100' : 
+                changeType === 'negative' ? 'bg-red-100' : 'bg-gray-100'
               }`}>
-                {change}
-              </span>
-              <span className="text-sm text-gray-400">vs last month</span>
+                {changeType === 'positive' && <TrendingUp className="w-3.5 h-3.5 text-green-600" />}
+                {changeType === 'negative' && <TrendingDown className="w-3.5 h-3.5 text-red-600" />}
+                <span className={`text-xs font-semibold ${
+                  changeType === 'positive' ? 'text-green-700' : 
+                  changeType === 'negative' ? 'text-red-700' : 'text-gray-600'
+                }`}>
+                  {change}
+                </span>
+              </div>
+              <span className="text-xs text-gray-500">vs last month</span>
             </div>
           )}
-        </div>
-        <div className={`p-3 rounded-lg ${colors.icon}`}>
-          <Icon className="w-6 h-6" />
         </div>
       </div>
     </div>
   )
 }
 
-export default function StatsCards() {
-  const stats = [
+export default function StatsCards({ stats }: StatsCardsProps) {
+  const statsData = [
     {
-      title: 'Total Bookings',
-      value: '1,234',
-      change: '+12.5%',
-      changeType: 'positive' as const,
-      icon: CalendarCheck,
-      color: 'blue' as const,
-    },
-    {
-      title: 'Active Buses',
-      value: '45',
-      change: '+3',
-      changeType: 'positive' as const,
+      title: 'Total Buses',
+      value: stats.buses,
       icon: Bus,
-      color: 'green' as const,
+      color: 'blue' as const,
+      description: 'Active fleet vehicles',
     },
     {
-      title: 'Registered Parents',
-      value: '2,847',
-      change: '+8.2%',
-      changeType: 'positive' as const,
+      title: 'Active Drivers',
+      value: stats.drivers,
       icon: Users,
-      color: 'purple' as const,
+      color: 'green' as const,
+      description: 'Licensed professionals',
     },
     {
       title: 'Active Routes',
-      value: '28',
-      change: '+2',
-      changeType: 'positive' as const,
+      value: stats.routes,
       icon: MapPin,
+      color: 'purple' as const,
+      description: 'Coverage areas',
+    },
+    {
+      title: 'Total Bookings',
+      value: stats.bookings,
+      icon: CalendarCheck,
       color: 'orange' as const,
+      description: 'All time',
     },
   ]
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h2>
+    <div className="space-y-8">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-8 text-white shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Dashboard Overview</h1>
+            <p className="text-blue-100">Monitor and manage your school transport system</p>
+          </div>
+          <div className="hidden md:block">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl px-6 py-4">
+              <p className="text-sm text-blue-100 mb-1">Today's Date</p>
+              <p className="text-xl font-semibold">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+            </div>
+          </div>
+        </div>
+      </div>
       
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statsData.map((stat, index) => (
           <StatCard key={index} {...stat} />
         ))}
-      </div>
-
-      {/* Recent Activity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Bookings */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Bookings</h3>
-          </div>
-          <div className="card-body">
-            <div className="space-y-4">
-              {[
-                { parent: 'John Doe', route: 'Route A - Downtown', time: '2 min ago', status: 'confirmed' },
-                { parent: 'Sarah Smith', route: 'Route B - Suburbs', time: '5 min ago', status: 'pending' },
-                { parent: 'Mike Johnson', route: 'Route A - Downtown', time: '10 min ago', status: 'confirmed' },
-                { parent: 'Emily Brown', route: 'Route C - Eastside', time: '15 min ago', status: 'cancelled' },
-              ].map((booking, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{booking.parent}</p>
-                      <p className="text-xs text-gray-500">{booking.route}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`badge ${
-                      booking.status === 'confirmed' ? 'badge-success' :
-                      booking.status === 'pending' ? 'badge-warning' : 'badge-danger'
-                    }`}>
-                      {booking.status}
-                    </span>
-                    <p className="text-xs text-gray-400 mt-1">{booking.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bus Status Overview */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold text-gray-900">Bus Fleet Status</h3>
-          </div>
-          <div className="card-body">
-            <div className="space-y-4">
-              {[
-                { bus: 'BUS-001', driver: 'Robert Wilson', status: 'active', location: 'Route A' },
-                { bus: 'BUS-002', driver: 'James Taylor', status: 'active', location: 'Route B' },
-                { bus: 'BUS-003', driver: 'Michael Brown', status: 'maintenance', location: 'Garage' },
-                { bus: 'BUS-004', driver: 'David Lee', status: 'active', location: 'Route C' },
-                { bus: 'BUS-005', driver: 'William Davis', status: 'inactive', location: 'Garage' },
-              ].map((bus, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      bus.status === 'active' ? 'bg-green-100' :
-                      bus.status === 'maintenance' ? 'bg-yellow-100' : 'bg-gray-100'
-                    }`}>
-                      <Bus className={`w-5 h-5 ${
-                        bus.status === 'active' ? 'text-green-600' :
-                        bus.status === 'maintenance' ? 'text-yellow-600' : 'text-gray-400'
-                      }`} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{bus.bus}</p>
-                      <p className="text-xs text-gray-500">{bus.driver}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`badge ${
-                      bus.status === 'active' ? 'badge-success' :
-                      bus.status === 'maintenance' ? 'badge-warning' : 'badge-info'
-                    }`}>
-                      {bus.status}
-                    </span>
-                    <p className="text-xs text-gray-400 mt-1">{bus.location}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )
 }
-

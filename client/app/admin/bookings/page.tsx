@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/admin/DashboardLayout";
 import BookingManager from "@/components/admin/BookingManager";
 import {
   getAdminBookings,
@@ -68,16 +69,29 @@ export default function AdminBookingsPage() {
     }
   }
 
-  if (loading) return <p>Loading bookings…</p>;
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading bookings...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <BookingManager
-      bookings={bookings}
-      buses={buses}
-      parents={parents}
-      onAddBooking={handleAddBooking}
-      onUpdateBooking={handleUpdateBooking}
-      onDeleteBooking={handleDeleteBooking}
-    />
+    <DashboardLayout>
+      <BookingManager
+        bookings={bookings}
+        buses={buses}
+        parents={parents}
+        onAddBooking={handleAddBooking}
+        onUpdateBooking={handleUpdateBooking}
+        onDeleteBooking={handleDeleteBooking}
+      />
+    </DashboardLayout>
   );
 }
