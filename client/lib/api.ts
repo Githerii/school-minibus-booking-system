@@ -261,3 +261,82 @@ export async function getAdminParents(): Promise<AdminParent[]> {
 
   return res.json();
 }
+
+// Parent Dashboard Endpoints
+
+export interface ParentBooking {
+  booking_id: number;
+  parent: string;
+  bus: string;
+  pickup: string;
+  dropoff: string;
+}
+
+export async function getParentBookings(): Promise<ParentBooking[]> {
+  const res = await fetchWithAuth("/bookings");
+  if (!res.ok) throw new Error("Failed to fetch bookings");
+  return res.json();
+}
+
+export async function createParentBooking(payload: {
+  parent_id: number;
+  bus_id: number;
+  pickup_point: string;
+  dropoff_point: string;
+}) {
+  const res = await fetchWithAuth("/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create booking");
+  return res.json();
+}
+export async function updateParentBooking(
+  id: number,
+  payload: {
+    pickup_point: string;
+    dropoff_point: string;
+    bus_id: number;
+  }
+) {
+  const res = await fetchWithAuth(`/bookings/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to update booking");
+  return res.json();
+}
+
+export async function deleteParentBooking(id: number) {
+  const res = await fetchWithAuth(`/bookings/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete booking");
+}
+
+export interface ParentRoute {
+  route_id: number;
+  route_name: string;
+}
+
+export async function getParentRoutes(): Promise<ParentRoute[]> {
+  const res = await fetchWithAuth("/routes");
+  if (!res.ok) throw new Error("Failed to fetch routes");
+  return res.json();
+}
+
+export interface ParentBus {
+  bus_id: number;
+  plate_number: string;
+  route: string;
+  driver: string;
+}
+
+export async function getParentBuses(): Promise<ParentBus[]> {
+  const res = await fetchWithAuth("/buses");
+  if (!res.ok) throw new Error("Failed to fetch buses");
+  return res.json();
+}
