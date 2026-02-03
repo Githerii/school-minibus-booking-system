@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/admin/DashboardLayout";
 import RouteManager from "@/components/admin/RouteManager";
 import {
   getAdminRoutes,
@@ -26,9 +27,8 @@ export default function AdminRoutesPage() {
     endLocation: string;
     status: "active" | "inactive";
   }) {
-    // this is an optimistic route
     const tempRoute = {
-      id: Date.now(), // this is liek a temporary id
+      id: Date.now(),
       busCount: 0,
       ...data,
     };
@@ -37,13 +37,10 @@ export default function AdminRoutesPage() {
 
     try {
       const saved = await createAdminRoute(data);
-
-      // replaces temp route with a real one
       setRoutes((prev) =>
         prev.map((r) => (r.id === tempRoute.id ? saved : r))
       );
     } catch (err) {
-      // this is a rollback
       setRoutes((prev) => prev.filter((r) => r.id !== tempRoute.id));
       alert("Failed to create route");
     }
@@ -66,7 +63,6 @@ export default function AdminRoutesPage() {
 
     try {
         const updated = await updateAdminRoute(id, data);
-
         setRoutes((prev) =>
         prev.map((r) => (r.id === id ? updated : r))
         );
@@ -87,16 +83,27 @@ export default function AdminRoutesPage() {
     }
   }
 
-
-
-  if (loading) return <p>Loading routes…</p>;
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading routes...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <RouteManager
-      routes={routes}
-      onAddRoute={handleAddRoute}
-      onUpdateRoute={handleUpdateRoute}
-      onDeleteRoute={handleDeleteRoute}
-    />
+    <DashboardLayout>
+      <RouteManager
+        routes={routes}
+        onAddRoute={handleAddRoute}
+        onUpdateRoute={handleUpdateRoute}
+        onDeleteRoute={handleDeleteRoute}
+      />
+    </DashboardLayout>
   );
 }
