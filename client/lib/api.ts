@@ -277,3 +277,19 @@ export async function getParentBookings(): Promise<ParentBooking[]> {
   if (!res.ok) throw new Error("Failed to fetch bookings");
   return res.json();
 }
+
+export async function createParentBooking(payload: {
+  parent_id: number;
+  bus_id: number;
+  pickup_point: string;
+  dropoff_point: string;
+}) {
+  const res = await fetchWithAuth("/bookings", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) throw new Error("Failed to create booking");
+  return res.json();
+}
+
