@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/admin/DashboardLayout";
 import BusManager from "@/components/admin/BusManager";
 import {
   getAdminBuses,
@@ -66,16 +67,29 @@ export default function AdminBusesPage() {
     }
   }
 
-  if (loading) return <p>Loading buses…</p>;
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading buses...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <BusManager
-      buses={buses}
-      routes={routes}
-      drivers={drivers}
-      onAddBus={handleAddBus}
-      onUpdateBus={handleUpdateBus}
-      onDeleteBus={handleDeleteBus}
-    />
+    <DashboardLayout>
+      <BusManager
+        buses={buses}
+        routes={routes}
+        drivers={drivers}
+        onAddBus={handleAddBus}
+        onUpdateBus={handleUpdateBus}
+        onDeleteBus={handleDeleteBus}
+      />
+    </DashboardLayout>
   );
 }
