@@ -1,9 +1,10 @@
 import DashboardLayout from "@/components/admin/DashboardLayout";
+import StatsCards from "@/components/admin/StatsCards";
 
 export default function AdminPage() {
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+      <StatsCards />
     </DashboardLayout>
   );
 }
