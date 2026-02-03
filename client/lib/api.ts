@@ -271,3 +271,9 @@ export interface ParentBooking {
   pickup: string;
   dropoff: string;
 }
+
+export async function getParentBookings(): Promise<ParentBooking[]> {
+  const res = await fetchWithAuth("/bookings");
+  if (!res.ok) throw new Error("Failed to fetch bookings");
+  return res.json();
+}
