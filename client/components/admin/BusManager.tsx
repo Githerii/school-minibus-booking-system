@@ -104,12 +104,15 @@ export default function BusManager({
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Bus Management</h2>
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Bus Management</h2>
+          <p className="text-gray-500 mt-1">Manage your fleet of buses</p>
+        </div>
         <button
           onClick={() => setShowModal(true)}
-          className="btn btn-primary flex items-center gap-2"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-5 h-5" />
           Add New Bus
         </button>
       </div>
@@ -123,58 +126,60 @@ export default function BusManager({
             placeholder="Search buses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm"
           />
         </div>
       </div>
 
       {/* Buses Table */}
-      <div className="card">
+      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table">
-            <thead>
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
               <tr>
-                <th>Plate Number</th>
-                <th>Route</th>
-                <th>Driver</th>
-                <th>Capacity</th>
-                <th>Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Plate Number</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Route</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Driver</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Capacity</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {filteredBuses.map((bus) => (
-                <tr key={bus.id}>
-                  <td>
+                <tr key={bus.id} className="hover:bg-blue-50/30 transition-colors">
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Bus className="w-4 h-4 text-blue-600" />
+                      <div className="p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md">
+                        <Bus className="w-5 h-5 text-white" />
                       </div>
-                      <span className="font-medium text-gray-900">{bus.plateNumber}</span>
+                      <span className="font-semibold text-gray-900">{bus.plateNumber}</span>
                     </div>
                   </td>
-                  <td>
-                    <div className="flex items-center gap-2 text-gray-600">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-gray-700">
                       <MapPin className="w-4 h-4 text-gray-400" />
                       {bus.routeName || "Unassigned"}
                     </div>
                   </td>
-                  <td>
-                    <div className="flex items-center gap-2 text-gray-600">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2 text-gray-700">
                       <User className="w-4 h-4 text-gray-400" />
                       {bus.driverName || "Unassigned"}
                     </div>
                   </td>
-                  <td>
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Users className="w-4 h-4 text-gray-400" />
-                      <span className="badge badge-info">{bus.capacity} seats</span>
+                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+                        {bus.capacity} seats
+                      </span>
                     </div>
                   </td>
-                  <td>
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(bus)}
-                        className="p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200"
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
                         title="Edit bus"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -185,7 +190,7 @@ export default function BusManager({
                             onDeleteBus(bus.id);
                           }
                         }}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                         title="Delete bus"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -201,15 +206,15 @@ export default function BusManager({
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-xl font-bold text-gray-900">
                 {editing ? "Edit Bus" : "Add New Bus"}
               </h3>
               <button
                 onClick={handleCancel}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -217,7 +222,7 @@ export default function BusManager({
             <form onSubmit={submit} className="p-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Plate Number
                   </label>
                   <input
@@ -225,13 +230,13 @@ export default function BusManager({
                     placeholder="e.g., ABC-1234"
                     value={form.plateNumber}
                     onChange={(e) => setForm({ ...form, plateNumber: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Capacity (Seats)
                   </label>
                   <input
@@ -240,19 +245,19 @@ export default function BusManager({
                     min="1"
                     value={form.capacity || ""}
                     onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Route
                   </label>
                   <select
                     value={form.routeId}
                     onChange={(e) => setForm({ ...form, routeId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
                     <option value="">Select route</option>
@@ -265,13 +270,13 @@ export default function BusManager({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Driver
                   </label>
                   <select
                     value={form.driverId}
                     onChange={(e) => setForm({ ...form, driverId: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   >
                     <option value="">Select driver</option>
@@ -287,11 +292,14 @@ export default function BusManager({
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="btn btn-secondary flex-1"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all duration-200"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary flex-1">
+                <button 
+                  type="submit" 
+                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 font-medium"
+                >
                   {editing ? "Update Bus" : "Add Bus"}
                 </button>
               </div>
