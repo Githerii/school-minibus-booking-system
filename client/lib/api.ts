@@ -317,3 +317,13 @@ export async function deleteParentBooking(id: number) {
   if (!res.ok) throw new Error("Failed to delete booking");
 }
 
+export interface ParentRoute {
+  route_id: number;
+  route_name: string;
+}
+
+export async function getParentRoutes(): Promise<ParentRoute[]> {
+  const res = await fetchWithAuth("/routes");
+  if (!res.ok) throw new Error("Failed to fetch routes");
+  return res.json();
+}
