@@ -327,3 +327,16 @@ export async function getParentRoutes(): Promise<ParentRoute[]> {
   if (!res.ok) throw new Error("Failed to fetch routes");
   return res.json();
 }
+
+export interface ParentBus {
+  bus_id: number;
+  plate_number: string;
+  route: string;
+  driver: string;
+}
+
+export async function getParentBuses(): Promise<ParentBus[]> {
+  const res = await fetchWithAuth("/buses");
+  if (!res.ok) throw new Error("Failed to fetch buses");
+  return res.json();
+}
