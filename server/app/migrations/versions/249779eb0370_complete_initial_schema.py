@@ -1,8 +1,8 @@
-"""empty message
+"""complete initial schema
 
-Revision ID: a75d3c790442
+Revision ID: 249779eb0370
 Revises: 
-Create Date: 2026-01-30 20:47:34.703593
+Create Date: 2026-02-03 20:01:02.741318
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a75d3c790442'
+revision = '249779eb0370'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -30,6 +30,7 @@ def upgrade():
     sa.Column('email', sa.String(length=120), nullable=False),
     sa.Column('full_name', sa.String(length=100), nullable=False),
     sa.Column('password_hash', sa.String(length=128), nullable=False),
+    sa.Column('role', sa.String(length=20), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('parent_id'),
     sa.UniqueConstraint('email')
@@ -39,6 +40,7 @@ def upgrade():
     sa.Column('route_name', sa.String(), nullable=True),
     sa.Column('start_location', sa.String(), nullable=False),
     sa.Column('end_location', sa.String(), nullable=False),
+    sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('route_id')
     )
