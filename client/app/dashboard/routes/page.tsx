@@ -30,12 +30,54 @@ export default function RoutesPage() {
     setMode("pickup");
   };
 
-  const handleSaveRoute = () => {
-    if (!pickup || !dropoff) return;
-    const routeData = { pickup, dropoff, distance };
-    console.log("Saving route:", routeData);
-    alert(`Route Saved! Total distance: ${distance}`);
+const handleSaveRoute = async () => {
+  // 1. Validation before sending
+  if (!pickup || !dropoff) {
+    alert("Please select both pickup and drop-off points");
+    return;
+  }
+
+  // 2. Prepare payload to match your backend's 'required_fields'
+  const payload = {
+    route_name: "Parent Selected Route",
+    start_location: `${pickup[0]},${pickup[1]}`, 
+    end_location: `${dropoff[0]},${dropoff[1]}`
   };
+
+  try {
+    const response = await fetch("http://localhost:5000/routes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // 3. Robust Error Handling
+    const contentType = response.headers.get("content-type");
+    
+    if (!response.ok) {
+      // If server sent JSON error, parse it. If it sent HTML, get the text.
+      if (contentType && contentType.includes("application/json")) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to save route");
+      } else {
+        const htmlError = await response.text();
+        console.error("Server returned HTML instead of JSON:", htmlError);
+        throw new Error("Server Error: Check Flask terminal for Traceback.");
+      }
+    }
+
+    // 4. Success handling
+    const result = await response.json();
+    alert(`Route saved successfully! ID: ${result.route_id}`);
+    return result;
+
+  } catch (err: any) {
+    console.error("Save route error:", err.message);
+    alert(err.message);
+  }
+};
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
