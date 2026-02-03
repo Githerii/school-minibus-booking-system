@@ -126,16 +126,16 @@ export default function BusManager({
             placeholder="Search buses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 shadow-sm text-gray-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-black shadow-sm text-gray-900 dark:text-white"
           />
         </div>
       </div>
 
       {/* Buses Table */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-black rounded-2xl border border-gray-200/60 dark:border-gray-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-800">
+            <thead className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-black border-b border-gray-200 dark:border-gray-800">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Plate Number</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Route</th>
@@ -179,7 +179,7 @@ export default function BusManager({
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(bus)}
-                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 rounded-xl transition-all duration-200"
+                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-900 rounded-xl transition-all duration-200"
                         title="Edit bus"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -190,7 +190,7 @@ export default function BusManager({
                             onDeleteBus(bus.id);
                           }
                         }}
-                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-gray-800 rounded-xl transition-all duration-200"
+                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:text-gray-400 dark:hover:text-red-400 dark:hover:bg-gray-900 rounded-xl transition-all duration-200"
                         title="Delete bus"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -207,14 +207,14 @@ export default function BusManager({
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white dark:bg-black rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {editing ? "Edit Bus" : "Add New Bus"}
               </h3>
               <button
                 onClick={handleCancel}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 rounded-xl transition-all duration-200"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-900 dark:hover:text-gray-200 rounded-xl transition-all duration-200"
               >
                 <X className="w-5 h-5" />
               </button>
