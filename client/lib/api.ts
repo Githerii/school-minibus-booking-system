@@ -309,3 +309,11 @@ export async function updateParentBooking(
   return res.json();
 }
 
+export async function deleteParentBooking(id: number) {
+  const res = await fetchWithAuth(`/bookings/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) throw new Error("Failed to delete booking");
+}
+
