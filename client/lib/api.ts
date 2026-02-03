@@ -261,3 +261,13 @@ export async function getAdminParents(): Promise<AdminParent[]> {
 
   return res.json();
 }
+
+// Parent Dashboard Endpoints
+
+export interface ParentBooking {
+  booking_id: number;
+  parent: string;
+  bus: string;
+  pickup: string;
+  dropoff: string;
+}
