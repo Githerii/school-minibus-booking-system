@@ -197,6 +197,8 @@ export interface AdminBooking {
   busPlate: string;
   pickup: string;
   dropoff: string;
+  bookingDate: string;
+  status: string;
 }
 
 export async function getAdminBookings(): Promise<AdminBooking[]> {
