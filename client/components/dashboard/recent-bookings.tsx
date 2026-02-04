@@ -1,3 +1,6 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -9,111 +12,105 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-type BookingStatus = "confirmed" | "pending" | "completed" | "cancelled"
+type BookingStatus = "booked" | "pending" | "completed" | "cancelled"
 
 interface Booking {
-  id: string
-  childName: string
+  booking_id: number
+  bus: string
   route: string
-  date: string
-  time: string
+  pickup: string
+  dropoff: string
+  numSeats: number
+  bookingDate: string
   status: BookingStatus
 }
 
-const recentBookings: Booking[] = [
-  {
-    id: "BK001",
-    childName: "Emma Doe",
-    route: "Route A - Maple School",
-    date: "Jan 27, 2026",
-    time: "7:30 AM",
-    status: "confirmed",
-  },
-  {
-    id: "BK002",
-    childName: "Noah Doe",
-    route: "Route A - Maple School",
-    date: "Jan 27, 2026",
-    time: "7:30 AM",
-    status: "confirmed",
-  },
-  {
-    id: "BK003",
-    childName: "Emma Doe",
-    route: "Route B - Afternoon",
-    date: "Jan 27, 2026",
-    time: "3:30 PM",
-    status: "pending",
-  },
-  {
-    id: "BK004",
-    childName: "Noah Doe",
-    route: "Route B - Afternoon",
-    date: "Jan 27, 2026",
-    time: "3:30 PM",
-    status: "pending",
-  },
-  {
-    id: "BK005",
-    childName: "Emma Doe",
-    route: "Route A - Maple School",
-    date: "Jan 26, 2026",
-    time: "7:30 AM",
-    status: "completed",
-  },
-]
-
 const statusStyles: Record<BookingStatus, string> = {
-  confirmed: "bg-green-100 text-green-800 hover:bg-green-100",
+  booked: "bg-green-100 text-green-800 hover:bg-green-100",
   pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
   completed: "bg-muted text-muted-foreground hover:bg-muted",
   cancelled: "bg-red-100 text-red-800 hover:bg-red-100",
 }
 
 export function RecentBookings() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  const fetchBookings = async () => {
+    try {
+      const token = localStorage.getItem("access_token")
+      const response = await fetch("http://localhost:5000/bookings", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBookings(data.slice(0, 5)) // Show only 5 most recent
+      }
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Bookings</CardTitle>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>Child</TableHead>
-              <TableHead className="hidden md:table-cell">Route</TableHead>
-              <TableHead className="hidden sm:table-cell">Date</TableHead>
-              <TableHead className="hidden sm:table-cell">Time</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {recentBookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell className="font-medium">{booking.id}</TableCell>
-                <TableCell>{booking.childName}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {booking.route}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {booking.date}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {booking.time}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="secondary"
-                    className={statusStyles[booking.status]}
-                  >
-                    {booking.status}
-                  </Badge>
-                </TableCell>
+        {loading ? (
+          <div className="text-center text-muted-foreground py-8">Loading bookings...</div>
+        ) : bookings.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            No bookings yet. Book your first ride!
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Booking ID</TableHead>
+                <TableHead>Bus</TableHead>
+                <TableHead className="hidden md:table-cell">Route</TableHead>
+                <TableHead className="hidden sm:table-cell">Seats</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {bookings.map((booking) => (
+                <TableRow key={booking.booking_id}>
+                  <TableCell className="font-medium">#{booking.booking_id}</TableCell>
+                  <TableCell>{booking.bus}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {booking.route || "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {booking.numSeats || 1}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {booking.bookingDate}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="secondary"
+                      className={statusStyles[booking.status]}
+                    >
+                      {booking.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   )
