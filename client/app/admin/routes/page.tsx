@@ -67,7 +67,11 @@ export default function RoutesPage() {
 
   const fetchRoutes = async () => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Not authenticated");
+        return;
+      }
       const response = await fetch("http://localhost:5000/admin/routes", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -120,8 +124,12 @@ export default function RoutesPage() {
     };
 
     try {
-      const token = localStorage.getItem("access_token");
-      const url = editingRoute 
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Noth authnticated");
+        return;
+      }
+      const url = editingRoute
         ? `http://localhost:5000/admin/routes/${editingRoute}`
         : "http://localhost:5000/admin/routes";
       
@@ -163,7 +171,11 @@ export default function RoutesPage() {
     if (!confirm("Are you sure you want to delete this route?")) return;
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Not authenticated");
+        return;
+      }
       const response = await fetch(`http://localhost:5000/admin/routes/${id}`, {
         method: "DELETE",
         headers: {
