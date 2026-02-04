@@ -628,7 +628,9 @@ def create_app():
                 "busId": b.bus_id,
                 "busPlate": b.bus.plate_number,
                 "pickup": b.pickup_point,
-                "dropoff": b.drop_off_point, 
+                "dropoff": b.drop_off_point,
+                "numSeats": b.num_seats,
+                "selectedDays": b.selected_days,
                 "bookingDate": b.booking_date,
                 "status": b.status
             }
