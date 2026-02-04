@@ -594,15 +594,23 @@ def create_app():
 
     
     @app.get("/bookings")
+    @jwt_required()  # Require authentication
     def get_bookings():
-        bookings = Booking.query.all()
+        parent_id = get_jwt_identity()
+        bookings = Booking.query.filter_by(parent_id=parent_id).all()
         return jsonify([
             {
                 "booking_id": b.booking_id,
                 "parent": b.parent.full_name,
                 "bus": b.bus.plate_number,
+                "route": b.bus.route.route_name if b.bus.route else None,
                 "pickup": b.pickup_point,
-                "dropoff": b.dropoff_point
+                "dropoff": b.dropoff_point,
+                "numSeats": b.num_seats,
+                "selectedDays": b.selected_days,
+                "bookingDate": b.booking_date,
+                "status": b.status,
+                "createdAt": b.created_at.strftime("%Y-%m-%d %H:%M:%S") if b.created_at else None
             }
             for b in bookings
         ])
