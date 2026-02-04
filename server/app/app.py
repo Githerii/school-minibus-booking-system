@@ -493,16 +493,19 @@ def create_app():
             data = request.get_json()
             
             # Validate required fields
-            required_fields = ["parent_id", "bus_id", "pickup_point", "dropoff_point"]
+            required_fields = ["bus_id", "pickup_point", "drop_off_point"]
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
                 return jsonify({
                     "error": f"Missing required fields: {', '.join(missing_fields)}"
                 }), 400
-            
+
+            #Gets parent id from JWT token
+            parent_id = get_jwt_identity()
+
             # Verify parent exists
-            parent = Parent.query.get(data["parent_id"])
+            parent = Parent.query.get(parent_id)
             if not parent:
                 return jsonify({"error": "Parent not found"}), 404
             
@@ -513,10 +516,14 @@ def create_app():
             
             # Create booking
             booking = Booking(
-                parent_id=data["parent_id"],
+                parent_id=parent_id,
                 bus_id=data["bus_id"],
                 pickup_point=data["pickup_point"],
-                dropoff_point=data["dropoff_point"]
+                drop_off_point=data["drop_off_point"],
+                num_seats=data.get("num_seats", 1),
+                selected_days=data.get("selected_days"),
+                booking_date=data.get("booking_date", datetime.now().strftime("%Y-%m-%d")),
+                status="booked"
             )
             
             db.session.add(booking)
@@ -527,7 +534,10 @@ def create_app():
                 "parent_id": booking.parent_id,
                 "bus_id": booking.bus_id,
                 "pickup": booking.pickup_point,
-                "dropoff": booking.dropoff_point,
+                "dropoff": booking.drop_off_point,
+                "numSeats": booking.num_seats,
+                "selectedDays": booking.selected_days,
+                "bookingDate": booking.booking_date,
                 "message": "Booking created successfully"
             }), 201
             
