@@ -4,7 +4,7 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-
+from datetime import datetime
 from app.utils.auth import admin_required
 
 
@@ -474,43 +474,96 @@ def create_app():
 
     #CRUD for Bookings
     @app.post("/bookings")
+    @jwt_required()  # Require authentication
     def create_booking():
-        data = request.get_json()
-        booking = Booking(
-            parent_id=data["parent_id"],
-            bus_id=data["bus_id"],
-            pickup_point=data["pickup_point"],
-            dropoff_point=data["dropoff_point"]
-        )
-        db.session.add(booking)
-        db.session.commit()
-        return jsonify({"message": "Booking created"}), 201
+        try:
+            data = request.get_json()
+            
+            # Validate required fields
+            required_fields = ["parent_id", "bus_id", "pickup_point", "dropoff_point"]
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                return jsonify({
+                    "error": f"Missing required fields: {', '.join(missing_fields)}"
+                }), 400
+            
+            # Verify parent exists
+            parent = Parent.query.get(data["parent_id"])
+            if not parent:
+                return jsonify({"error": "Parent not found"}), 404
+            
+            # Verify bus exists
+            bus = Bus.query.get(data["bus_id"])
+            if not bus:
+                return jsonify({"error": "Bus not found"}), 404
+            
+            # Create booking
+            booking = Booking(
+                parent_id=data["parent_id"],
+                bus_id=data["bus_id"],
+                pickup_point=data["pickup_point"],
+                dropoff_point=data["dropoff_point"]
+            )
+            
+            db.session.add(booking)
+            db.session.commit()
+            
+            return jsonify({
+                "id": booking.booking_id,
+                "parent_id": booking.parent_id,
+                "bus_id": booking.bus_id,
+                "pickup": booking.pickup_point,
+                "dropoff": booking.dropoff_point,
+                "message": "Booking created successfully"
+            }), 201
+            
+        except KeyError as e:
+            db.session.rollback()
+            return jsonify({"error": f"Invalid field: {str(e)}"}), 400
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Failed to create booking: {str(e)}"}), 500
     
     #Admin create bookings endpoint
     @app.post("/admin/bookings")
     @admin_required
     def admin_create_booking():
-        data = request.get_json()
+        try:
+            data = request.get_json()
 
-        required = ["parentId", "busId", "pickup", "dropoff"]
-        if not all(field in data for field in required):
-            return {"error": "Missing required fields"}, 400
+            required = ["parentId", "busId", "pickup", "dropoff"]
+            if not all(field in data for field in required):
+                return {"error": "Missing required fields"}, 400
 
-        booking = Booking(
-            parent_id=data["parentId"],
-            bus_id=data["busId"],
-            pickup_point=data["pickup"],
-            dropoff_point=data["dropoff"]
-        )
+            # this line is for Getting today's date as default if not provided
+            booking_date = data.get("bookingDate", datetime.now().strftime("%Y-%m-%d"))
 
-        db.session.add(booking)
-        db.session.commit()
+            booking = Booking(
+                parent_id=data["parentId"],
+                bus_id=data["busId"],
+                pickup_point=data["pickup"],
+                drop_off_point=data["dropoff"],  
+                booking_date=booking_date,        
+                status=data.get("status", "booked")
+            )
 
-        return {
-            "id": booking.booking_id,
-            "pickup": booking.pickup_point,
-            "dropoff": booking.dropoff_point
-        }, 201
+            db.session.add(booking)
+            db.session.commit()
+
+            return {
+                "id": booking.booking_id,
+                "parentId": booking.parent_id,
+                "busId": booking.bus_id,
+                "pickup": booking.pickup_point,
+                "dropoff": booking.drop_off_point,
+                "bookingDate": booking.booking_date,
+                "status": booking.status
+            }, 201
+            
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
 
     
     @app.get("/bookings")
@@ -534,11 +587,15 @@ def create_app():
         bookings = Booking.query.all()
         return jsonify([
             {
-                "booking_id": b.booking_id,
-                "parent": b.parent.full_name,
-                "bus": b.bus.plate_number,
+                "id": b.booking_id,
+                "parentId": b.parent_id,
+                "parentName": b.parent.full_name,
+                "busId": b.bus_id,
+                "busPlate": b.bus.plate_number,
                 "pickup": b.pickup_point,
-                "dropoff": b.dropoff_point
+                "dropoff": b.drop_off_point, 
+                "bookingDate": b.booking_date,
+                "status": b.status
             }
             for b in bookings
         ])
@@ -561,9 +618,12 @@ def create_app():
         booking = Booking.query.get_or_404(booking_id)
         data = request.get_json()
 
+        booking.parent_id = data.get("parentId", booking.parent_id)
         booking.bus_id = data.get("busId", booking.bus_id)
         booking.pickup_point = data.get("pickup", booking.pickup_point)
-        booking.dropoff_point = data.get("dropoff", booking.dropoff_point)
+        booking.drop_off_point = data.get("dropoff", booking.drop_off_point)  
+        booking.booking_date = data.get("bookingDate", booking.booking_date)
+        booking.status = data.get("status", booking.status)
 
         db.session.commit()
 
