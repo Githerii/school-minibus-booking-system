@@ -566,8 +566,10 @@ def create_app():
                 parent_id=data["parentId"],
                 bus_id=data["busId"],
                 pickup_point=data["pickup"],
-                drop_off_point=data["dropoff"],  
-                booking_date=booking_date,        
+                drop_off_point=data["dropoff"],
+                num_seats=data.get("numSeats", 1),
+                selected_days=data.get("selectedDays"),
+                booking_date=booking_date,
                 status=data.get("status", "booked")
             )
 
@@ -580,6 +582,8 @@ def create_app():
                 "busId": booking.bus_id,
                 "pickup": booking.pickup_point,
                 "dropoff": booking.drop_off_point,
+                "numSeats": booking.num_seats,
+                "selectedDays": booking.selected_days,
                 "bookingDate": booking.booking_date,
                 "status": booking.status
             }, 201
