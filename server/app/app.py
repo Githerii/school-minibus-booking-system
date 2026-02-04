@@ -156,6 +156,8 @@ def create_app():
             route_name=data["name"],
             start_location=data["startLocation"],
             end_location=data["endLocation"],
+            pickup_spots=data.get("pickupSpots"),
+            dropoff_spots=data.get("dropoffSpots"),
             status=data.get("status", "active")
         )
 
@@ -167,6 +169,8 @@ def create_app():
             "name": route.route_name,
             "startLocation": route.start_location,
             "endLocation": route.end_location,
+            "pickupSpots": route.pickup_spots,
+            "dropoffSpots": route.dropoff_spots,
             "status": route.status,
             "busCount": 0
         }), 201
@@ -174,9 +178,14 @@ def create_app():
 
     @app.get("/routes")
     def get_routes():
-        routes = Route.query.all()
+        routes = Route.query.filter_by(status="active").all()
         return jsonify([
-            {"route_id": r.route_id, "route_name": r.route_name}
+            {"route_id": r.route_id,
+             "route_name": r.route_name,
+             "start_location": r.start_location,
+             "end_location": r.end_location,
+             "pickup_spots": r.pickup_spots,
+             "dropoff_spots": r.dropoff_spots}
             for r in routes
         ])
     
@@ -191,6 +200,8 @@ def create_app():
                 "name": r.route_name,
                 "startLocation": r.start_location,
                 "endLocation": r.end_location,
+                "pickupSpots": r.pickup_spots,
+                "dropoffSpots": r.dropoff_spots,
                 "status": r.status,
                 "busCount": len(r.buses) if hasattr(r, "buses") else 0
             }
@@ -218,6 +229,8 @@ def create_app():
         route.route_name = data.get("name", route.route_name)
         route.start_location = data.get("startLocation", route.start_location)
         route.end_location = data.get("endLocation", route.end_location)
+        route.pickup_spots = data.get("pickupSpots", route.pickup_spots)
+        route.dropoff_spots = data.get("dropoffSpots", route.dropoff_spots)
         route.status = data.get("status", route.status)
 
         db.session.commit()
