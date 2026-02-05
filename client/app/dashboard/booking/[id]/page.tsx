@@ -68,7 +68,7 @@ export default function BookingDetailsPage() {
 
   const fetchBookingDetails = async () => {
     try {
-      const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("token")
       
       // Fetch booking
       const bookingRes = await fetch("http://localhost:5000/bookings", {
