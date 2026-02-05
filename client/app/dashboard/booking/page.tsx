@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import {
   CalendarDays,
   Clock,
@@ -13,6 +14,7 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
+  Users,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -39,47 +41,25 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const bookings = [
-  {
-    id: "BK001",
-    childName: "Emma Johnson",
-    route: "Greenwood Elementary - Route A",
-    date: "2026-01-27",
-    pickupTime: "7:30 AM",
-    dropoffTime: "3:45 PM",
-    status: "active",
-    pickupLocation: "123 Oak Street",
-  },
-  {
-    id: "BK002",
-    childName: "Liam Johnson",
-    route: "Greenwood Elementary - Route A",
-    date: "2026-01-27",
-    pickupTime: "7:30 AM",
-    dropoffTime: "3:45 PM",
-    status: "active",
-    pickupLocation: "123 Oak Street",
-  },
-  {
-    id: "BK003",
-    childName: "Emma Johnson",
-    route: "After School Program - Route C",
-    date: "2026-01-28",
-    pickupTime: "3:45 PM",
-    dropoffTime: "5:00 PM",
-    status: "pending",
-    pickupLocation: "Greenwood Elementary",
-  }
- 
-]
+interface Booking {
+  booking_id: number
+  bus: string
+  route: string | null
+  pickup: string
+  dropoff: string
+  numSeats: number
+  selectedDays: string | null
+  bookingDate: string
+  status: string
+}
 
 function getStatusBadge(status: string) {
-  switch (status) {
-    case "active":
+  switch (status.toLowerCase()) {
+    case "booked":
       return (
         <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
           <CheckCircle2 className="mr-1 size-3" />
-          Active
+          Booked
         </Badge>
       )
     case "pending":
@@ -109,20 +89,55 @@ function getStatusBadge(status: string) {
 }
 
 export default function BookingsPage() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
 
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  const fetchBookings = async () => {
+    try {
+      const token = localStorage.getItem("access_token")
+      const response = await fetch("http://localhost:5000/bookings", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setBookings(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
-      booking.childName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.route.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking.id.toLowerCase().includes(searchQuery.toLowerCase())
+      booking.bus.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (booking.route && booking.route.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      booking.booking_id.toString().includes(searchQuery.toLowerCase())
 
     const matchesStatus =
-      statusFilter === "all" || booking.status === statusFilter
+      statusFilter === "all" || booking.status.toLowerCase() === statusFilter.toLowerCase()
 
     return matchesSearch && matchesStatus
   })
+
+  const getDaysCount = (selectedDays: string | null) => {
+    if (!selectedDays) return 0
+    try {
+      return JSON.parse(selectedDays).length
+    } catch {
+      return 0
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -154,7 +169,7 @@ export default function BookingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="booked">Booked</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -167,28 +182,39 @@ export default function BookingsPage() {
 
       {/* Bookings List */}
       <div className="grid gap-4">
-        {filteredBookings.length === 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="flex items-center justify-center py-12">
+              <p className="text-muted-foreground">Loading bookings...</p>
+            </CardContent>
+          </Card>
+        ) : filteredBookings.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <AlertCircle className="size-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-medium">No bookings found</h3>
               <p className="text-muted-foreground">
-                Try adjusting your search or filters
+                {bookings.length === 0 ? "You haven't made any bookings yet" : "Try adjusting your search or filters"}
               </p>
+              {bookings.length === 0 && (
+                <Button asChild className="mt-4">
+                  <Link href="/dashboard/book">Book Your First Ride</Link>
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
           filteredBookings.map((booking) => (
-            <Card key={booking.id}>
+            <Card key={booking.booking_id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="text-base">
-                      {booking.childName}
+                      Booking #{booking.booking_id}
                     </CardTitle>
                     <CardDescription className="flex items-center gap-1">
                       <Bus className="size-3" />
-                      {booking.route}
+                      {booking.route || "Route not assigned"} - {booking.bus}
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
@@ -201,11 +227,13 @@ export default function BookingsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 size-4" />
-                          View Details
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/booking/${booking.booking_id}`}>
+                            <Eye className="mr-2 size-4" />
+                            View Details
+                          </Link>
                         </DropdownMenuItem>
-                        {booking.status === "active" && (
+                        {booking.status === "booked" && (
                           <DropdownMenuItem className="text-red-600">
                             <X className="mr-2 size-4" />
                             Cancel Booking
@@ -220,17 +248,25 @@ export default function BookingsPage() {
                 <div className="grid gap-3 text-sm sm:grid-cols-3">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="size-4 text-muted-foreground" />
-                    <span>{new Date(booking.date).toLocaleDateString()}</span>
+                    <span>{new Date(booking.bookingDate).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="size-4 text-muted-foreground" />
+                    <span>{booking.numSeats || 1} seat(s)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="size-4 text-muted-foreground" />
-                    <span>
-                      {booking.pickupTime} - {booking.dropoffTime}
-                    </span>
+                    <span>{getDaysCount(booking.selectedDays)} day(s) scheduled</span>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t grid gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="size-4 text-emerald-600" />
+                    <span className="text-xs">Pickup: <span className="font-medium">{booking.pickup}</span></span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <MapPin className="size-4 text-muted-foreground" />
-                    <span className="truncate">{booking.pickupLocation}</span>
+                    <MapPin className="size-4 text-red-600" />
+                    <span className="text-xs">Dropoff: <span className="font-medium">{booking.dropoff}</span></span>
                   </div>
                 </div>
               </CardContent>
