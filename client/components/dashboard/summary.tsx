@@ -18,7 +18,7 @@ export function SummaryCards() {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("token")
       
       // Fetch bookings
       const bookingsRes = await fetch("http://localhost:5000/bookings", {

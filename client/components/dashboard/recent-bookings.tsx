@@ -42,7 +42,7 @@ export function RecentBookings() {
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("token")
       const response = await fetch("http://localhost:5000/bookings", {
         headers: {
           Authorization: `Bearer ${token}`,
