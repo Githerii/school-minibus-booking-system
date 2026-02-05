@@ -32,12 +32,14 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="size-5" />
-          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-            2
-          </span>
-          <span className="sr-only">Notifications</span>
+        <Button variant="ghost" size="icon" className="relative" asChild>
+          <Link href="/dashboard/notifications">
+            <Bell className="size-5" />
+            <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+              2
+            </span>
+            <span className="sr-only">Notifications</span>
+          </Link>
         </Button>
 
         <DropdownMenu>
