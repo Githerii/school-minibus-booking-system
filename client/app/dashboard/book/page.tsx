@@ -438,21 +438,15 @@ export default function BookRidePage() {
               <Label>Select Dates (Click to toggle)</Label>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
                 {generateDates().map((date) => (
-                  <Label
+                  <div
                     key={date}
-                    htmlFor={date}
+                    onClick={() => handleDateToggle(date)}
                     className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 transition-colors ${
                       selectedDates.includes(date)
                         ? "border-primary bg-primary/5"
                         : "hover:bg-muted/50"
                     }`}
                   >
-                    <Checkbox
-                      id={date}
-                      checked={selectedDates.includes(date)}
-                      onCheckedChange={() => handleDateToggle(date)}
-                      className="sr-only"
-                    />
                     <div className="text-center">
                       <div className="text-xs font-medium">
                         {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
@@ -464,7 +458,7 @@ export default function BookRidePage() {
                         {new Date(date).toLocaleDateString('en-US', { month: 'short' })}
                       </div>
                     </div>
-                  </Label>
+                  </div>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
