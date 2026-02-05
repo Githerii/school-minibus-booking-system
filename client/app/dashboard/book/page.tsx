@@ -118,7 +118,13 @@ export default function BookRidePage() {
     setIsSubmitting(true)
 
     try {
-      const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("token")
+      
+      if (!token) {
+        alert("Please log in to book a ride")
+        setIsSubmitting(false)
+        return
+      }
       
       // Find a bus assigned to this route
       const busesRes = await fetch("http://localhost:5000/buses")

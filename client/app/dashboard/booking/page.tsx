@@ -100,7 +100,14 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem("access_token")
+      const token = localStorage.getItem("token")
+      
+      if (!token) {
+        console.error("No token found")
+        setLoading(false)
+        return
+      }
+      
       const response = await fetch("http://localhost:5000/bookings", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,7 +116,10 @@ export default function BookingsPage() {
 
       if (response.ok) {
         const data = await response.json()
+        console.log("Bookings fetched:", data)
         setBookings(data)
+      } else {
+        console.error("Failed to fetch bookings:", response.status)
       }
     } catch (error) {
       console.error("Failed to fetch bookings:", error)
