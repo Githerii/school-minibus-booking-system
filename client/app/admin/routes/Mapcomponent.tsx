@@ -21,17 +21,38 @@ const schoolIcon = L.icon({
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
-  className: "hue-rotate-90", // Visual distinction for school
+  className: "hue-rotate-90",
 });
 
-/* --- 1. ROAD ROUTING ENGINE --- */
+const pickupSpotIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [20, 33],
+  iconAnchor: [10, 33],
+});
+
+const dropoffSpotIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [20, 33],
+  iconAnchor: [10, 33],
+  className: "hue-rotate-90",
+});
+
+interface RouteSpot {
+  lat: number;
+  lng: number;
+  name: string;
+}
+
 /* --- 1. ROAD ROUTING ENGINE --- */
 function RoutingEngine({ pickup, dropoff, setDistance }: any) {
   const map = useMap();
   const routingControlRef = useRef<any>(null);
 
   useEffect(() => {
-    // Only run if the map instance is alive and we have both points
     if (!map || !pickup || !dropoff) return;
 
     let isMounted = true;
@@ -42,7 +63,6 @@ function RoutingEngine({ pickup, dropoff, setDistance }: any) {
       
       if (!isMounted || !map) return;
 
-      // 1. COMPLETELY WIPE PREVIOUS CONTROL BEFORE STARTING
       if (routingControlRef.current) {
         try {
           map.removeControl(routingControlRef.current);
@@ -52,7 +72,6 @@ function RoutingEngine({ pickup, dropoff, setDistance }: any) {
         }
       }
 
-      // 2. INITIALIZE WITH "GHOST" SETTINGS TO PREVENT UI CLUTTER
       const control = (L as any).Routing.control({
         waypoints: [
           L.latLng(pickup[0], pickup[1]),
@@ -61,13 +80,11 @@ function RoutingEngine({ pickup, dropoff, setDistance }: any) {
         router: (L as any).Routing.osrmv1({
           serviceUrl: `https://router.project-osrm.org/route/v1`
         }),
-        // --- HIDE ALL ROUTE INFO & MARKERS ---
         show: false, 
         addWaypoints: false,
         draggableWaypoints: false,
         fitSelectedRoutes: true,
-        createMarker: () => null, // Prevents LRM from creating markers
-        // -------------------------------------
+        createMarker: () => null,
         lineOptions: { 
           styles: [{ color: "#2563eb", weight: 6, opacity: 0.8 }],
           extendToWaypoints: true,
@@ -87,18 +104,15 @@ function RoutingEngine({ pickup, dropoff, setDistance }: any) {
 
     addRouting();
 
-    // 3. THE "GOLDEN" CLEANUP
     return () => {
       isMounted = false;
       if (routingControlRef.current && map) {
         try {
-          // Check if the map container still exists in DOM to avoid removeLayer error
           const container = map.getContainer();
           if (container && routingControlRef.current) {
             map.removeControl(routingControlRef.current);
           }
         } catch (error) {
-          // Silent catch for the Leaflet-Routing-Machine race condition
           console.debug("Routing machine disposed safely.");
         } finally {
           routingControlRef.current = null;
@@ -120,7 +134,16 @@ function MapClickHandler({ onClick }: { onClick: (coords: [number, number]) => v
 }
 
 /* --- 3. MAIN COMPONENT --- */
-export default function MapComponent({ pickup, dropoff, setDistance, onMapClick, mode, onClear }: any) {
+export default function MapComponent({ 
+  pickup, 
+  dropoff, 
+  setDistance, 
+  onMapClick, 
+  mode, 
+  onClear,
+  pickupSpots = [],
+  dropoffSpots = []
+}: any) {
   const [addressQuery, setAddressQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -163,11 +186,15 @@ export default function MapComponent({ pickup, dropoff, setDistance, onMapClick,
         <div className="relative flex flex-col gap-1 bg-white p-2 rounded-lg shadow-xl border-2 border-blue-100">
           <div className="flex items-center gap-2">
             <div className="pl-2">
-              {mode === 'pickup' ? <Home className="w-4 h-4 text-blue-500" /> : <School className="w-4 h-4 text-green-500" />}
+              {mode === 'start' || mode === 'pickup' ? (
+                <Home className="w-4 h-4 text-blue-500" />
+              ) : (
+                <School className="w-4 h-4 text-green-500" />
+              )}
             </div>
             <input
               type="text"
-              placeholder={`Search ${mode === 'pickup' ? 'Home' : 'School'}...`}
+              placeholder={`Search location...`}
               className="flex-1 px-2 py-1 text-sm outline-none"
               value={addressQuery}
               onChange={(e) => setAddressQuery(e.target.value)}
@@ -215,9 +242,43 @@ export default function MapComponent({ pickup, dropoff, setDistance, onMapClick,
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <MapClickHandler onClick={onMapClick} />
         
-        {/* CUSTOM MARKERS USING THE ICON FIX */}
-        {pickup && <Marker position={pickup} icon={homeIcon}><Popup>Home (Pickup)</Popup></Marker>}
-        {dropoff && <Marker position={dropoff} icon={schoolIcon}><Popup>School (Drop-off)</Popup></Marker>}
+        {/* Main route start and end markers */}
+        {pickup && (
+          <Marker position={pickup} icon={homeIcon}>
+            <Popup>Route Start</Popup>
+          </Marker>
+        )}
+        {dropoff && (
+          <Marker position={dropoff} icon={schoolIcon}>
+            <Popup>Route End</Popup>
+          </Marker>
+        )}
+        
+        {/* Pickup spots */}
+        {pickupSpots.map((spot: RouteSpot, idx: number) => (
+          <Marker 
+            key={`pickup-${idx}`} 
+            position={[spot.lat, spot.lng]} 
+            icon={pickupSpotIcon}
+          >
+            <Popup>
+              <strong>Pickup:</strong> {spot.name}
+            </Popup>
+          </Marker>
+        ))}
+        
+        {/* Dropoff spots */}
+        {dropoffSpots.map((spot: RouteSpot, idx: number) => (
+          <Marker 
+            key={`dropoff-${idx}`} 
+            position={[spot.lat, spot.lng]} 
+            icon={dropoffSpotIcon}
+          >
+            <Popup>
+              <strong>Dropoff:</strong> {spot.name}
+            </Popup>
+          </Marker>
+        ))}
         
         {pickup && dropoff && <RoutingEngine pickup={pickup} dropoff={dropoff} setDistance={setDistance} />}
       </MapContainer>

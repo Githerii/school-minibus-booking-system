@@ -23,6 +23,8 @@ class Route(db.Model):
     route_name = db.Column(db.String)
     start_location = db.Column(db.String, nullable=False)
     end_location = db.Column(db.String, nullable=False)
+    pickup_spots = db.Column(db.String, nullable=True)
+    dropoff_spots = db.Column(db.String, nullable=True)
     status = db.Column(db.String(20), nullable=False, default="active")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -60,6 +62,8 @@ class Booking(db.Model):
     bus_id = db.Column(db.Integer, db.ForeignKey("buses.bus_id"), nullable=False)
     pickup_point = db.Column(db.String)
     drop_off_point = db.Column(db.String)
+    num_seats = db.Column(db.Integer, default = 1)
+    selected_days = db.Column(db.String, nullable=True)
     booking_date = db.Column(db.String, nullable=False)
     status = db.Column(db.String, default="booked")
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
