@@ -1,17 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import {
   Bus,
   Calendar,
   MapPin,
-  User,
+  Users,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Clock,
-  School,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -35,60 +34,165 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 
-const children = [
-  { id: "CH001", name: "Emma Johnson", grade: "3rd Grade", school: "Greenwood Elementary" },
-  { id: "CH002", name: "Liam Johnson", grade: "5th Grade", school: "Greenwood Elementary" },
-]
+interface Route {
+  route_id: number
+  route_name: string
+  pickup_spots?: string
+  dropoff_spots?: string
+}
 
-const routes = [
-  { id: "RT001", name: "Greenwood Elementary - Route A", time: "7:00 AM - 7:45 AM" },
-  { id: "RT002", name: "Greenwood Elementary - Route B", time: "7:15 AM - 8:00 AM" },
-  { id: "RT003", name: "Lincoln Middle School - Route A", time: "7:30 AM - 8:15 AM" },
-]
+interface RouteSpot {
+  lat: number
+  lng: number
+  name: string
+}
 
 const steps = [
-  { id: 1, name: "Select Child", icon: User },
+  { id: 1, name: "Number of Seats", icon: Users },
   { id: 2, name: "Choose Route", icon: MapPin },
-  { id: 3, name: "Schedule", icon: Calendar },
-  { id: 4, name: "Confirm", icon: CheckCircle2 },
+  { id: 3, name: "Pickup & Dropoff", icon: MapPin },
+  { id: 4, name: "Schedule", icon: Calendar },
+  { id: 5, name: "Confirm", icon: CheckCircle2 },
 ]
 
 export default function BookRidePage() {
   const [currentStep, setCurrentStep] = useState(1)
-  const [selectedChild, setSelectedChild] = useState("")
-  const [selectedRoute, setSelectedRoute] = useState("")
-  const [bookingType, setBookingType] = useState("recurring")
-  const [selectedDays, setSelectedDays] = useState<string[]>(["monday", "tuesday", "wednesday", "thursday", "friday"])
-  const [pickupAddress, setPickupAddress] = useState("")
+  const [numSeats, setNumSeats] = useState("1")
+  const [routes, setRoutes] = useState<Route[]>([])
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
+  const [pickupSpots, setPickupSpots] = useState<RouteSpot[]>([])
+  const [dropoffSpots, setDropoffSpots] = useState<RouteSpot[]>([])
+  const [selectedPickup, setSelectedPickup] = useState("")
+  const [selectedDropoff, setSelectedDropoff] = useState("")
+  const [selectedDates, setSelectedDates] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
-  const handleDayToggle = (day: string) => {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+  useEffect(() => {
+    fetchRoutes()
+  }, [])
+
+  const fetchRoutes = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/routes")
+      if (response.ok) {
+        const data = await response.json()
+        setRoutes(data)
+      }
+    } catch (error) {
+      console.error("Failed to fetch routes:", error)
+    }
+  }
+
+  const handleRouteSelect = (routeId: string) => {
+    const route = routes.find(r => r.route_id === parseInt(routeId))
+    if (route) {
+      setSelectedRoute(route)
+      
+      // Parse pickup and dropoff spots
+      if (route.pickup_spots) {
+        try {
+          setPickupSpots(JSON.parse(route.pickup_spots))
+        } catch (e) {
+          setPickupSpots([])
+        }
+      }
+      
+      if (route.dropoff_spots) {
+        try {
+          setDropoffSpots(JSON.parse(route.dropoff_spots))
+        } catch (e) {
+          setDropoffSpots([])
+        }
+      }
+    }
+  }
+
+  const handleDateToggle = (date: string) => {
+    setSelectedDates((prev) =>
+      prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
     )
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
+
+    try {
+      const token = localStorage.getItem("token")
+      
+      if (!token) {
+        alert("Please log in to book a ride")
+        setIsSubmitting(false)
+        return
+      }
+      
+      // Find a bus assigned to this route
+      const busesRes = await fetch("http://localhost:5000/buses")
+      const buses = await busesRes.json()
+      const routeBus = buses.find((b: any) => b.route_id === selectedRoute?.route_id)
+      
+      if (!routeBus) {
+        alert("No bus assigned to this route. Please contact admin.")
+        setIsSubmitting(false)
+        return
+      }
+
+      const payload = {
+        bus_id: routeBus.bus_id,
+        pickup_point: selectedPickup,
+        drop_off_point: selectedDropoff,
+        num_seats: parseInt(numSeats),
+        selected_days: JSON.stringify(selectedDates),
+        booking_date: new Date().toISOString().split('T')[0],
+      }
+
+      const response = await fetch("http://localhost:5000/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (response.ok) {
+        setIsComplete(true)
+      } else {
+        const error = await response.json()
+        alert(error.error || "Failed to create booking")
+      }
+    } catch (error: any) {
+      console.error("Booking error:", error)
+      alert("Failed to create booking")
+    } finally {
       setIsSubmitting(false)
-      setIsComplete(true)
-    }, 1500)
+    }
   }
 
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return selectedChild !== ""
+        return parseInt(numSeats) > 0
       case 2:
-        return selectedRoute !== ""
+        return selectedRoute !== null
       case 3:
-        return pickupAddress !== "" && (bookingType === "one-time" || selectedDays.length > 0)
+        return selectedPickup !== "" && selectedDropoff !== ""
+      case 4:
+        return selectedDates.length > 0
       default:
         return true
     }
+  }
+
+  // Generate next 30 days for calendar
+  const generateDates = () => {
+    const dates = []
+    for (let i = 1; i <= 30; i++) {
+      const date = new Date()
+      date.setDate(date.getDate() + i)
+      dates.push(date.toISOString().split('T')[0])
+    }
+    return dates
   }
 
   if (isComplete) {
@@ -108,27 +212,31 @@ export default function BookRidePage() {
             <div className="rounded-lg bg-muted p-4 text-left text-sm">
               <div className="grid gap-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Child:</span>
-                  <span className="font-medium">
-                    {children.find((c) => c.id === selectedChild)?.name}
-                  </span>
+                  <span className="text-muted-foreground">Seats:</span>
+                  <span className="font-medium">{numSeats}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Route:</span>
-                  <span className="font-medium">
-                    {routes.find((r) => r.id === selectedRoute)?.name}
-                  </span>
+                  <span className="font-medium">{selectedRoute?.route_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Type:</span>
-                  <span className="font-medium capitalize">{bookingType}</span>
+                  <span className="text-muted-foreground">Pickup:</span>
+                  <span className="font-medium">{selectedPickup}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Dropoff:</span>
+                  <span className="font-medium">{selectedDropoff}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Days:</span>
+                  <span className="font-medium">{selectedDates.length} selected</span>
                 </div>
               </div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-2">
             <Button className="w-full" asChild>
-              <Link href="/dashboard/bookings">View My Bookings</Link>
+              <Link href="/dashboard/booking">View My Bookings</Link>
             </Button>
             <Button variant="outline" className="w-full bg-transparent" asChild>
               <Link href="/dashboard">Back to Dashboard</Link>
@@ -151,7 +259,7 @@ export default function BookRidePage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Book a Ride</h1>
           <p className="text-muted-foreground">
-            Schedule transport for your child
+            Schedule transport for your family
           </p>
         </div>
       </div>
@@ -211,189 +319,200 @@ export default function BookRidePage() {
         </div>
       </div>
 
-      {/* Step Content */}
       <Card>
         <CardHeader>
           <CardTitle>{steps[currentStep - 1].name}</CardTitle>
           <CardDescription>
-            {currentStep === 1 && "Choose which child needs transport"}
-            {currentStep === 2 && "Select a route for pickup and drop-off"}
-            {currentStep === 3 && "Set your pickup location and schedule"}
-            {currentStep === 4 && "Review and confirm your booking"}
+            {currentStep === 1 && "Select how many seats you need"}
+            {currentStep === 2 && "Choose a route for pickup and drop-off"}
+            {currentStep === 3 && "Select your pickup and dropoff locations"}
+            {currentStep === 4 && "Choose the dates you need transport"}
+            {currentStep === 5 && "Review and confirm your booking"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Step 1: Select Child */}
+          {/* Step 1: Number of Seats */}
           {currentStep === 1 && (
-            <RadioGroup
-              value={selectedChild}
-              onValueChange={setSelectedChild}
-              className="grid gap-4"
-            >
-              {children.map((child) => (
-                <Label
-                  key={child.id}
-                  htmlFor={child.id}
-                  className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
-                    selectedChild === child.id
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-muted/50"
-                  }`}
-                >
-                  <RadioGroupItem value={child.id} id={child.id} />
-                  <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                    <User className="size-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{child.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {child.grade} - {child.school}
-                    </div>
-                  </div>
-                </Label>
-              ))}
-            </RadioGroup>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="numSeats">Number of Seats</Label>
+                <Input
+                  id="numSeats"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={numSeats}
+                  onChange={(e) => setNumSeats(e.target.value)}
+                  placeholder="Enter number of seats"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  How many seats do you need to book?
+                </p>
+              </div>
+            </div>
           )}
 
           {/* Step 2: Choose Route */}
           {currentStep === 2 && (
-            <RadioGroup
-              value={selectedRoute}
-              onValueChange={setSelectedRoute}
-              className="grid gap-4"
-            >
-              {routes.map((route) => (
-                <Label
-                  key={route.id}
-                  htmlFor={route.id}
-                  className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
-                    selectedRoute === route.id
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-muted/50"
-                  }`}
-                >
-                  <RadioGroupItem value={route.id} id={route.id} />
-                  <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-                    <Bus className="size-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{route.name}</div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="size-3" />
-                      {route.time}
-                    </div>
-                  </div>
-                </Label>
-              ))}
-            </RadioGroup>
-          )}
-
-          {/* Step 3: Schedule */}
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="pickup-address">Pickup Address</Label>
-                <Input
-                  id="pickup-address"
-                  placeholder="Enter your pickup address"
-                  value={pickupAddress}
-                  onChange={(e) => setPickupAddress(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Booking Type</Label>
-                <Select value={bookingType} onValueChange={setBookingType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="recurring">Recurring (Weekly)</SelectItem>
-                    <SelectItem value="one-time">One-time Trip</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {bookingType === "recurring" && (
-                <div className="space-y-2">
-                  <Label>Select Days</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {["monday", "tuesday", "wednesday", "thursday", "friday"].map(
-                      (day) => (
-                        <Label
-                          key={day}
-                          htmlFor={day}
-                          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 transition-colors ${
-                            selectedDays.includes(day)
-                              ? "border-primary bg-primary/5"
-                              : "hover:bg-muted/50"
-                          }`}
-                        >
-                          <Checkbox
-                            id={day}
-                            checked={selectedDays.includes(day)}
-                            onCheckedChange={() => handleDayToggle(day)}
-                          />
-                          <span className="capitalize">{day.slice(0, 3)}</span>
-                        </Label>
-                      )
-                    )}
-                  </div>
+            <div className="space-y-4">
+              {routes.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No routes available. Please contact admin.
                 </div>
+              ) : (
+                <RadioGroup
+                  value={selectedRoute?.route_id.toString()}
+                  onValueChange={handleRouteSelect}
+                  className="grid gap-4"
+                >
+                  {routes.map((route) => (
+                    <Label
+                      key={route.route_id}
+                      htmlFor={route.route_id.toString()}
+                      className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${
+                        selectedRoute?.route_id === route.route_id
+                          ? "border-primary bg-primary/5"
+                          : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <RadioGroupItem value={route.route_id.toString()} id={route.route_id.toString()} />
+                      <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+                        <Bus className="size-5 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{route.route_name}</div>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="size-3" />
+                          {route.pickup_spots ? `${JSON.parse(route.pickup_spots).length} pickup spots` : 'No pickup spots'}
+                        </div>
+                      </div>
+                    </Label>
+                  ))}
+                </RadioGroup>
               )}
             </div>
           )}
 
-          {/* Step 4: Confirm */}
+          {/* Step 3: Pickup & Dropoff */}
+          {currentStep === 3 && (
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="pickup">Pickup Location</Label>
+                <Select value={selectedPickup} onValueChange={setSelectedPickup}>
+                  <SelectTrigger id="pickup">
+                    <SelectValue placeholder="Select pickup spot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pickupSpots.length === 0 ? (
+                      <SelectItem value="none" disabled>No pickup spots available</SelectItem>
+                    ) : (
+                      pickupSpots.map((spot, idx) => (
+                        <SelectItem key={idx} value={spot.name}>
+                          {spot.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="dropoff">Dropoff Location</Label>
+                <Select value={selectedDropoff} onValueChange={setSelectedDropoff}>
+                  <SelectTrigger id="dropoff">
+                    <SelectValue placeholder="Select dropoff spot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dropoffSpots.length === 0 ? (
+                      <SelectItem value="none" disabled>No dropoff spots available</SelectItem>
+                    ) : (
+                      dropoffSpots.map((spot, idx) => (
+                        <SelectItem key={idx} value={spot.name}>
+                          {spot.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Schedule/Calendar */}
           {currentStep === 4 && (
+            <div className="space-y-4">
+              <Label>Select Dates (Click to toggle)</Label>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
+                {generateDates().map((date) => (
+                  <div
+                    key={date}
+                    onClick={() => handleDateToggle(date)}
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border p-3 transition-colors ${
+                      selectedDates.includes(date)
+                        ? "border-primary bg-primary/5"
+                        : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="text-xs font-medium">
+                        {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
+                      </div>
+                      <div className="text-sm">
+                        {new Date(date).getDate()}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(date).toLocaleDateString('en-US', { month: 'short' })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {selectedDates.length} date(s) selected
+              </p>
+            </div>
+          )}
+
+          {/* Step 5: Confirm */}
+          {currentStep === 5 && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-4">
                 <h3 className="mb-3 font-medium">Booking Summary</h3>
                 <div className="grid gap-3 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground">
-                      <User className="size-4" />
-                      Child
+                      <Users className="size-4" />
+                      Seats
                     </span>
-                    <span className="font-medium">
-                      {children.find((c) => c.id === selectedChild)?.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-muted-foreground">
-                      <School className="size-4" />
-                      School
-                    </span>
-                    <span className="font-medium">
-                      {children.find((c) => c.id === selectedChild)?.school}
-                    </span>
+                    <span className="font-medium">{numSeats}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Bus className="size-4" />
                       Route
                     </span>
-                    <span className="font-medium">
-                      {routes.find((r) => r.id === selectedRoute)?.name}
-                    </span>
+                    <span className="font-medium">{selectedRoute?.route_name}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="size-4" />
                       Pickup
                     </span>
-                    <span className="font-medium">{pickupAddress}</span>
+                    <span className="font-medium">{selectedPickup}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="size-4" />
+                      Dropoff
+                    </span>
+                    <span className="font-medium">{selectedDropoff}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="size-4" />
-                      Schedule
+                      Selected Dates
                     </span>
-                    <span className="font-medium capitalize">
-                      {bookingType === "recurring"
-                        ? selectedDays.map((d) => d.slice(0, 3)).join(", ")
-                        : "One-time"}
-                    </span>
+                    <span className="font-medium">{selectedDates.length} days</span>
                   </div>
                 </div>
               </div>
@@ -410,7 +529,7 @@ export default function BookRidePage() {
             <ArrowLeft className="mr-2 size-4" />
             Back
           </Button>
-          {currentStep < 4 ? (
+          {currentStep < 5 ? (
             <Button
               onClick={() => setCurrentStep((prev) => prev + 1)}
               disabled={!canProceed()}

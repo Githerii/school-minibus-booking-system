@@ -9,6 +9,10 @@ interface Booking {
   busId: number;
   pickup: string;
   dropoff: string;
+  numSeats?: number;
+  selectedDays?: string;
+  bookingDate?: string;
+  status?: string;
   parentName?: string;
   busPlate?: string;
 }
@@ -47,6 +51,8 @@ export default function BookingManager({
     busId: "",
     pickup: "",
     dropoff: "",
+    numSeats: "1",
+    bookingDate: new Date().toISOString().split('T')[0],
   });
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -73,6 +79,8 @@ export default function BookingManager({
       busId: Number(form.busId),
       pickup: form.pickup,
       dropoff: form.dropoff,
+      numSeats: Number(form.numSeats),
+      bookingDate: form.bookingDate,
     };
 
     if (editing) {
@@ -83,7 +91,14 @@ export default function BookingManager({
 
     setShowModal(false);
     setEditing(null);
-    setForm({ parentId: "", busId: "", pickup: "", dropoff: "" });
+    setForm({ 
+      parentId: "", 
+      busId: "", 
+      pickup: "", 
+      dropoff: "",
+      numSeats: "1",
+      bookingDate: new Date().toISOString().split('T')[0],
+    });
   }
 
   function handleEdit(booking: Booking) {
@@ -93,6 +108,8 @@ export default function BookingManager({
       busId: String(booking.busId),
       pickup: booking.pickup,
       dropoff: booking.dropoff,
+      numSeats: String(booking.numSeats || 1),
+      bookingDate: booking.bookingDate || new Date().toISOString().split('T')[0],
     });
     setShowModal(true);
   }
@@ -100,7 +117,14 @@ export default function BookingManager({
   function handleCancel() {
     setShowModal(false);
     setEditing(null);
-    setForm({ parentId: "", busId: "", pickup: "", dropoff: "" });
+    setForm({ 
+      parentId: "", 
+      busId: "", 
+      pickup: "", 
+      dropoff: "",
+      numSeats: "1",
+      bookingDate: new Date().toISOString().split('T')[0],
+    });
   }
 
   return (
@@ -285,6 +309,35 @@ export default function BookingManager({
                     required
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Number of Seats
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    placeholder="1"
+                    value={form.numSeats}
+                    onChange={(e) => setForm({ ...form, numSeats: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Booking Date
+                  </label>
+                  <input
+                    type="date"
+                    value={form.bookingDate}
+                    onChange={(e) => setForm({ ...form, bookingDate: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    required
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-3 mt-6">
                 <button
@@ -308,4 +361,3 @@ export default function BookingManager({
     </div>
   );
 }
-

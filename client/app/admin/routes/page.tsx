@@ -1,9 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Home, School, Save, MapPin, Navigation, Info, Trash2 } from "lucide-react";
+import { MapPin, Save, Trash2, Plus, Edit, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // dynamic import to ensure Leaflet only runs on the client side
 const MapComponent = dynamic(() => import("./Mapcomponent"), {
@@ -16,92 +33,222 @@ const MapComponent = dynamic(() => import("./Mapcomponent"), {
   ),
 });
 
+interface RouteSpot {
+  lat: number;
+  lng: number;
+  name: string;
+}
+
+interface Route {
+  id: number;
+  name: string;
+  startLocation: string;
+  endLocation: string;
+  pickupSpots?: string;
+  dropoffSpots?: string;
+  status: string;
+  busCount: number;
+}
+
 export default function RoutesPage() {
-  const [pickup, setPickup] = useState<[number, number] | null>(null);
-  const [dropoff, setDropoff] = useState<[number, number] | null>(null);
-  const [mode, setMode] = useState<"pickup" | "dropoff">("pickup");
-  const [distance, setDistance] = useState<string>("");
+  const [routeName, setRouteName] = useState("");
+  const [startPoint, setStartPoint] = useState<[number, number] | null>(null);
+  const [endPoint, setEndPoint] = useState<[number, number] | null>(null);
+  const [pickupSpots, setPickupSpots] = useState<RouteSpot[]>([]);
+  const [dropoffSpots, setDropoffSpots] = useState<RouteSpot[]>([]);
+  const [mode, setMode] = useState<"start" | "end" | "pickup" | "dropoff">("start");
+  const [spotName, setSpotName] = useState("");
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [editingRoute, setEditingRoute] = useState<number | null>(null);
 
-  // Handler to reset all map data
-  const handleClearMap = () => {
-    setPickup(null);
-    setDropoff(null);
-    setDistance("");
-    setMode("pickup");
+  useEffect(() => {
+    fetchRoutes();
+  }, []);
+
+  const fetchRoutes = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Not authenticated");
+        return;
+      }
+      const response = await fetch("http://localhost:5000/admin/routes", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRoutes(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch routes:", error);
+    }
   };
 
-const handleSaveRoute = async () => {
-  // 1. Validation before sending
-  if (!pickup || !dropoff) {
-    alert("Please select both pickup and drop-off points");
-    return;
-  }
-
-  // 2. Prepare payload to match your backend's 'required_fields'
-  const payload = {
-    route_name: "Parent Selected Route",
-    start_location: `${pickup[0]},${pickup[1]}`, 
-    end_location: `${dropoff[0]},${dropoff[1]}`
+  const handleMapClick = (coords: [number, number]) => {
+    if (mode === "start") {
+      setStartPoint(coords);
+    } else if (mode === "end") {
+      setEndPoint(coords);
+    } else if (mode === "pickup" && spotName.trim()) {
+      setPickupSpots([...pickupSpots, { lat: coords[0], lng: coords[1], name: spotName }]);
+      setSpotName("");
+    } else if (mode === "dropoff" && spotName.trim()) {
+      setDropoffSpots([...dropoffSpots, { lat: coords[0], lng: coords[1], name: spotName }]);
+      setSpotName("");
+    }
   };
 
-  try {
-    const response = await fetch("http://localhost:5000/routes", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+  const handleRemovePickupSpot = (index: number) => {
+    setPickupSpots(pickupSpots.filter((_, i) => i !== index));
+  };
 
-    // 3. Robust Error Handling
-    const contentType = response.headers.get("content-type");
-    
-    if (!response.ok) {
-      // If server sent JSON error, parse it. If it sent HTML, get the text.
-      if (contentType && contentType.includes("application/json")) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save route");
+  const handleRemoveDropoffSpot = (index: number) => {
+    setDropoffSpots(dropoffSpots.filter((_, i) => i !== index));
+  };
+
+  const handleSaveRoute = async () => {
+    if (!routeName || !startPoint || !endPoint) {
+      alert("Please fill in route name and select both start and end points");
+      return;
+    }
+
+    const payload = {
+      name: routeName,
+      startLocation: JSON.stringify({ lat: startPoint[0], lng: startPoint[1] }),
+      endLocation: JSON.stringify({ lat: endPoint[0], lng: endPoint[1] }),
+      pickupSpots: pickupSpots.length > 0 ? JSON.stringify(pickupSpots) : null,
+      dropoffSpots: dropoffSpots.length > 0 ? JSON.stringify(dropoffSpots) : null,
+      status: "active",
+    };
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Noth authnticated");
+        return;
+      }
+      const url = editingRoute
+        ? `http://localhost:5000/admin/routes/${editingRoute}`
+        : "http://localhost:5000/admin/routes";
+      
+      const response = await fetch(url, {
+        method: editingRoute ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        alert(editingRoute ? "Route updated successfully!" : "Route saved successfully!");
+        handleClearForm();
+        fetchRoutes();
       } else {
-        const htmlError = await response.text();
-        console.error("Server returned HTML instead of JSON:", htmlError);
-        throw new Error("Server Error: Check Flask terminal for Traceback.");
+        const error = await response.json();
+        alert(error.error || "Failed to save route");
+      }
+    } catch (err: any) {
+      console.error("Save route error:", err.message);
+      alert(err.message);
+    }
+  };
+
+  const handleClearForm = () => {
+    setRouteName("");
+    setStartPoint(null);
+    setEndPoint(null);
+    setPickupSpots([]);
+    setDropoffSpots([]);
+    setSpotName("");
+    setMode("start");
+    setEditingRoute(null);
+  };
+
+  const handleDeleteRoute = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this route?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Not authenticated");
+        return;
+      }
+      const response = await fetch(`http://localhost:5000/admin/routes/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        alert("Route deleted successfully!");
+        fetchRoutes();
+      }
+    } catch (error) {
+      console.error("Failed to delete route:", error);
+    }
+  };
+
+  const handleEditRoute = (route: Route) => {
+    setRouteName(route.name);
+    
+    try {
+      const start = JSON.parse(route.startLocation);
+      const end = JSON.parse(route.endLocation);
+      setStartPoint([start.lat, start.lng]);
+      setEndPoint([end.lat, end.lng]);
+    } catch (e) {
+      // If parsing fails, try comma-separated format
+      const [startLat, startLng] = route.startLocation.split(",").map(Number);
+      const [endLat, endLng] = route.endLocation.split(",").map(Number);
+      setStartPoint([startLat, startLng]);
+      setEndPoint([endLat, endLng]);
+    }
+
+    if (route.pickupSpots) {
+      try {
+        setPickupSpots(JSON.parse(route.pickupSpots));
+      } catch (e) {
+        setPickupSpots([]);
       }
     }
 
-    // 4. Success handling
-    const result = await response.json();
-    alert(`Route saved successfully! ID: ${result.route_id}`);
-    return result;
+    if (route.dropoffSpots) {
+      try {
+        setDropoffSpots(JSON.parse(route.dropoffSpots));
+      } catch (e) {
+        setDropoffSpots([]);
+      }
+    }
 
-  } catch (err: any) {
-    console.error("Save route error:", err.message);
-    alert(err.message);
-  }
-};
+    setEditingRoute(route.id);
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header Section */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl border shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">School Route Booking</h1>
-          <p className="text-slate-500 text-sm">Find your home and school to calculate the precise travel route.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Route Management</h1>
+          <p className="text-slate-500 text-sm">Create and manage school bus routes with pickup and dropoff points.</p>
         </div>
         <div className="flex gap-2">
-           <Button 
+          <Button 
             variant="outline"
-            onClick={handleClearMap}
+            onClick={handleClearForm}
             className="text-red-500 border-red-200 hover:bg-red-50"
-            disabled={!pickup && !dropoff}
           >
-            <Trash2 className="mr-2 h-4 w-4" /> Reset
+            <Trash2 className="mr-2 h-4 w-4" /> Clear
           </Button>
           <Button 
-            disabled={!pickup || !dropoff}
             onClick={handleSaveRoute}
+            disabled={!routeName || !startPoint || !endPoint}
             className="bg-green-600 hover:bg-green-700 h-10 px-8 font-bold shadow-md"
           >
-            <Save className="mr-2 h-4 w-4" /> Save Route
+            <Save className="mr-2 h-4 w-4" /> {editingRoute ? "Update Route" : "Save Route"}
           </Button>
         </div>
       </div>
@@ -109,81 +256,212 @@ const handleSaveRoute = async () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar Controls */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="space-y-2">
-            <Button 
-              variant={mode === "pickup" ? "default" : "outline"} 
-              className={`w-full justify-start h-12 ${mode === 'pickup' ? 'ring-2 ring-blue-100' : ''}`}
-              onClick={() => setMode("pickup")}
-            >
-              <Home className={`mr-2 h-4 w-4 ${mode === 'pickup' ? 'text-white' : 'text-blue-500'}`} />
-              Set Pickup (Home)
-            </Button>
-            <Button 
-              variant={mode === "dropoff" ? "default" : "outline"} 
-              className={`w-full justify-start h-12 ${mode === 'dropoff' ? 'ring-2 ring-green-100' : ''}`}
-              onClick={() => setMode("dropoff")}
-            >
-              <School className={`mr-2 h-4 w-4 ${mode === 'dropoff' ? 'text-white' : 'text-green-500'}`} />
-              Set Drop-off (School)
-            </Button>
-          </div>
-
-          {/* Coordinate Display Card */}
-          <div className="p-4 bg-white rounded-lg border space-y-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <MapPin className="text-blue-500 w-5 h-5 shrink-0" />
-              <div className="overflow-hidden">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Home Location</p>
-                <p className="text-xs font-mono truncate text-slate-700">
-                  {pickup ? `${pickup[0].toFixed(5)}, ${pickup[1].toFixed(5)}` : "Not selected"}
-                </p>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Route Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="routeName">Route Name</Label>
+                <Input
+                  id="routeName"
+                  value={routeName}
+                  onChange={(e) => setRouteName(e.target.value)}
+                  placeholder="e.g., Kiambu Road"
+                />
               </div>
-            </div>
-            <div className="flex items-center gap-3 pt-3 border-t">
-              <Navigation className="text-green-500 w-5 h-5 shrink-0" />
-              <div className="overflow-hidden">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">School Location</p>
-                <p className="text-xs font-mono truncate text-slate-700">
-                  {dropoff ? `${dropoff[0].toFixed(5)}, ${dropoff[1].toFixed(5)}` : "Not selected"}
-                </p>
+
+              <div className="space-y-2">
+                <Label>Map Mode</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    size="sm"
+                    variant={mode === "start" ? "default" : "outline"}
+                    onClick={() => setMode("start")}
+                  >
+                    Start
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={mode === "end" ? "default" : "outline"}
+                    onClick={() => setMode("end")}
+                  >
+                    End
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={mode === "pickup" ? "default" : "outline"}
+                    onClick={() => setMode("pickup")}
+                  >
+                    Pickup
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={mode === "dropoff" ? "default" : "outline"}
+                    onClick={() => setMode("dropoff")}
+                  >
+                    Dropoff
+                  </Button>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Distance Result */}
-          {distance && (
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg text-center animate-in fade-in slide-in-from-bottom-2">
-              <p className="text-[10px] text-blue-600 font-bold uppercase mb-1">Total Road Distance</p>
-              <p className="text-3xl font-black text-blue-900">{distance}</p>
-            </div>
-          )}
+              {(mode === "pickup" || mode === "dropoff") && (
+                <div>
+                  <Label htmlFor="spotName">Spot Name</Label>
+                  <Input
+                    id="spotName"
+                    value={spotName}
+                    onChange={(e) => setSpotName(e.target.value)}
+                    placeholder="e.g., Shopping Mall"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter a name, then click on map
+                  </p>
+                </div>
+              )}
 
-          <div className="flex gap-2 p-3 bg-slate-50 border rounded-lg">
-            <Info className="w-4 h-4 text-slate-400 shrink-0" />
-            <p className="text-[11px] text-slate-500 leading-tight">
-              Calculations are based on vehicle-accessible roads suitable for school minibuses.
-            </p>
-          </div>
+              <div className="p-3 bg-slate-50 rounded-lg space-y-2">
+                <div className="text-xs">
+                  <span className="font-semibold">Start: </span>
+                  {startPoint ? `${startPoint[0].toFixed(5)}, ${startPoint[1].toFixed(5)}` : "Not set"}
+                </div>
+                <div className="text-xs">
+                  <span className="font-semibold">End: </span>
+                  {endPoint ? `${endPoint[0].toFixed(5)}, ${endPoint[1].toFixed(5)}` : "Not set"}
+                </div>
+              </div>
+
+              {pickupSpots.length > 0 && (
+                <div>
+                  <Label className="text-xs">Pickup Spots ({pickupSpots.length})</Label>
+                  <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                    {pickupSpots.map((spot, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-blue-50 p-2 rounded text-xs">
+                        <span className="truncate">{spot.name}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemovePickupSpot(idx)}
+                          className="h-5 w-5 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {dropoffSpots.length > 0 && (
+                <div>
+                  <Label className="text-xs">Dropoff Spots ({dropoffSpots.length})</Label>
+                  <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+                    {dropoffSpots.map((spot, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-green-50 p-2 rounded text-xs">
+                        <span className="truncate">{spot.name}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveDropoffSpot(idx)}
+                          className="h-5 w-5 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Map Area */}
-        <div className="lg:col-span-3 h-[650px] rounded-2xl overflow-hidden border-2 shadow-inner bg-slate-50 relative">
-          <MapComponent 
-            pickup={pickup} 
-            dropoff={dropoff} 
-            setDistance={setDistance}
-            mode={mode}
-            onClear={handleClearMap}
-            onMapClick={(coords: [number, number]) => {
-              if (mode === "pickup") {
-                setPickup(coords);
-                // Smart Switch: If user just set pickup, move to dropoff automatically
-                setMode("dropoff");
-              } else {
-                setDropoff(coords);
-              }
-            }}
-          />
+        <div className="lg:col-span-3 space-y-4">
+          <div className="h-[500px] rounded-2xl overflow-hidden border-2 shadow-inner bg-slate-50">
+            <MapComponent 
+              pickup={startPoint}
+              dropoff={endPoint}
+              mode={mode}
+              pickupSpots={pickupSpots}
+              dropoffSpots={dropoffSpots}
+              onMapClick={handleMapClick}
+              setDistance={() => {}}
+              onClear={handleClearForm}
+            />
+          </div>
+
+          {/* Routes Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Existing Routes</CardTitle>
+              <CardDescription>Manage all bus routes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Pickup Spots</TableHead>
+                    <TableHead>Dropoff Spots</TableHead>
+                    <TableHead>Buses</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {routes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        No routes created yet
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    routes.map((route) => (
+                      <TableRow key={route.id}>
+                        <TableCell className="font-medium">{route.name}</TableCell>
+                        <TableCell>
+                          {route.pickupSpots ? JSON.parse(route.pickupSpots).length : 0}
+                        </TableCell>
+                        <TableCell>
+                          {route.dropoffSpots ? JSON.parse(route.dropoffSpots).length : 0}
+                        </TableCell>
+                        <TableCell>{route.busCount}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            route.status === "active" 
+                              ? "bg-green-100 text-green-800" 
+                              : "bg-gray-100 text-gray-800"
+                          }`}>
+                            {route.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleEditRoute(route)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteRoute(route.id)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -7,11 +7,7 @@ import {
   Phone,
   MapPin,
   Camera,
-  Plus,
   Pencil,
-  Trash2,
-  School,
-  Calendar,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -26,29 +22,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
-
-const initialChildren = [
-  {
-    id: "CH001",
-    name: "Emma Johnson",
-    grade: "3rd Grade",
-    school: "Greenwood Elementary",
-    dob: "2018-05-15",
-  },
-  {
-    id: "CH002",
-    name: "Liam Johnson",
-    grade: "5th Grade",
-    school: "Greenwood Elementary",
-    dob: "2016-08-22",
-  },
-]
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [children] = useState(initialChildren)
 
   const [profile, setProfile] = useState({
     fullName: "Sarah Johnson",
@@ -186,72 +163,30 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* Children Section */}
+      {/* Account Statistics */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>My Children</CardTitle>
-              <CardDescription>
-                Manage children registered for transport
-              </CardDescription>
-            </div>
-            <Button size="sm">
-              <Plus className="mr-2 size-4" />
-              Add Child
-            </Button>
+          <div>
+            <CardTitle>Account Statistics</CardTitle>
+            <CardDescription>
+              Your booking activity overview
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4">
-            {children.map((child, index) => (
-              <div key={child.id}>
-                {index > 0 && <Separator className="mb-4" />}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <AvatarFallback>
-                        {child.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="space-y-1">
-                      <div className="font-medium">{child.name}</div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <School className="size-3" />
-                          {child.school}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <User className="size-3" />
-                          {child.grade}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="size-3" />
-                          {new Date(child.dob).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="size-8">
-                      <Pencil className="size-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-8 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="size-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border p-4">
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-sm text-muted-foreground">Total Bookings</div>
+            </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-sm text-muted-foreground">Active Bookings</div>
+            </div>
+            <div className="rounded-lg border p-4">
+              <div className="text-2xl font-bold">0</div>
+              <div className="text-sm text-muted-foreground">Total Seats</div>
+            </div>
           </div>
         </CardContent>
       </Card>

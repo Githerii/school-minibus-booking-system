@@ -1,98 +1,96 @@
-import { Bus, CheckCircle2, Clock, MapPin } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+"use client"
 
-interface PickupStep {
-  label: string
-  time: string
-  completed: boolean
-  current?: boolean
+import { useEffect, useState } from "react"
+import { Calendar, MapPin } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+
+interface Booking {
+  booking_id: number
+  pickup: string
+  dropoff: string
+  selectedDays: string
+  status: string
 }
 
-const pickupSteps: PickupStep[] = [
-  { label: "Driver departed", time: "7:00 AM", completed: true },
-  { label: "En route to pickup", time: "7:15 AM", completed: true },
-  { label: "Arriving at stop", time: "7:25 AM", completed: false, current: true },
-  { label: "Picked up", time: "7:30 AM", completed: false },
-  { label: "Arrived at school", time: "7:45 AM", completed: false },
-]
-
 export function PickupStatus() {
-  const completedSteps = pickupSteps.filter((step) => step.completed).length
-  const progress = (completedSteps / pickupSteps.length) * 100
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchUpcomingBookings()
+  }, [])
+
+  const fetchUpcomingBookings = async () => {
+    try {
+      const token = localStorage.getItem("token")
+      const response = await fetch("http://localhost:5000/bookings", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Get only active bookings, limit to 3
+        const active = data.filter((b: Booking) => b.status === "booked").slice(0, 3)
+        setUpcomingBookings(active)
+      }
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bus className="size-5" />
-          Live Pickup Status
+          <Calendar className="size-5" />
+          Upcoming Bookings
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Route Progress</span>
-            <span className="font-medium">{Math.round(progress)}%</span>
+      <CardContent>
+        {loading ? (
+          <div className="text-center text-muted-foreground py-4">Loading...</div>
+        ) : upcomingBookings.length === 0 ? (
+          <div className="text-center text-muted-foreground py-8">
+            <p className="text-sm">No upcoming bookings</p>
+            <p className="text-xs mt-1">Book a ride to see it here</p>
           </div>
-          <Progress value={progress} className="h-2" />
-        </div>
-
-        <div className="space-y-4">
-          {pickupSteps.map((step, index) => (
-            <div key={index} className="flex items-start gap-3">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`flex size-8 items-center justify-center rounded-full ${
-                    step.completed
-                      ? "bg-primary text-primary-foreground"
-                      : step.current
-                        ? "border-2 border-primary bg-background"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {step.completed ? (
-                    <CheckCircle2 className="size-4" />
-                  ) : step.current ? (
-                    <MapPin className="size-4 text-primary" />
-                  ) : (
-                    <Clock className="size-4" />
+        ) : (
+          <div className="space-y-4">
+            {upcomingBookings.map((booking) => (
+              <div key={booking.booking_id} className="border-b pb-3 last:border-0">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Booking #{booking.booking_id}</p>
+                    <Badge variant="secondary" className="mt-1 text-xs">
+                      {booking.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="size-3" />
+                    <span>From: {booking.pickup}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="size-3" />
+                    <span>To: {booking.dropoff}</span>
+                  </div>
+                  {booking.selectedDays && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="size-3" />
+                      <span>{JSON.parse(booking.selectedDays).length} days scheduled</span>
+                    </div>
                   )}
                 </div>
-                {index < pickupSteps.length - 1 && (
-                  <div
-                    className={`h-8 w-0.5 ${
-                      step.completed ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
-                )}
               </div>
-              <div className="flex-1 pt-1">
-                <p
-                  className={`text-sm font-medium ${
-                    step.current ? "text-primary" : ""
-                  }`}
-                >
-                  {step.label}
-                </p>
-                <p className="text-xs text-muted-foreground">{step.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="rounded-lg bg-muted/50 p-3">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium">Driver:</span>
-            <span className="text-muted-foreground">Michael Thompson</span>
+            ))}
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium">Vehicle:</span>
-            <span className="text-muted-foreground">
-              Minibus #12 (ABC-1234)
-            </span>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   )

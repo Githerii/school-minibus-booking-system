@@ -30,7 +30,6 @@ import {
 const mainNavItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "My Bookings", href: "/dashboard/booking", icon: CalendarDays },
-  { title: "Routes", href: "/dashboard/routes", icon: MapPin },
   { title: "Book a Ride", href: "/dashboard/book", icon: Bus },
 ]
 
