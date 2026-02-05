@@ -19,6 +19,22 @@ def create_app():
     app.config["JWT_SECRET_KEY"] = "super-secret-change-this"
     jwt = JWTManager(app)
 
+    # JWT error handlers
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error):
+        print(f"DEBUG: Invalid token - {error}")
+        return jsonify({"error": "Invalid token"}), 422
+
+    @jwt.unauthorized_loader
+    def unauthorized_callback(error):
+        print(f"DEBUG: Unauthorized - {error}")
+        return jsonify({"error": "Missing authorization header"}), 401
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        print(f"DEBUG: Expired token")
+        return jsonify({"error": "Token has expired"}), 401
+
     db.init_app(app)
     migrate = Migrate(app, db)
     CORS(app)
@@ -414,8 +430,10 @@ def create_app():
             {
                 "bus_id": b.bus_id,
                 "plate_number": b.plate_number,
+                "route_id": b.route_id,
                 "route": b.route.route_name,
-                "driver": b.driver.name
+                "driver": b.driver.name,
+                "capacity": b.capacity
             }
             for b in buses
         ])
@@ -491,28 +509,43 @@ def create_app():
     def create_booking():
         try:
             data = request.get_json()
+            print(f"DEBUG: Received booking data: {data}")
             
             # Validate required fields
             required_fields = ["bus_id", "pickup_point", "drop_off_point"]
             missing_fields = [field for field in required_fields if field not in data]
             
             if missing_fields:
-                return jsonify({
-                    "error": f"Missing required fields: {', '.join(missing_fields)}"
-                }), 400
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                print(f"DEBUG: {error_msg}")
+                return jsonify({"error": error_msg}), 400
 
             #Gets parent id from JWT token
             parent_id = get_jwt_identity()
+            print(f"DEBUG: Parent ID from token (raw): {parent_id} (type: {type(parent_id)})")
+            
+            # Convert to int if it's a string
+            try:
+                parent_id = int(parent_id)
+            except (ValueError, TypeError) as e:
+                print(f"DEBUG: Failed to convert parent_id to int: {e}")
+                return jsonify({"error": "Invalid parent ID in token"}), 400
+            
+            print(f"DEBUG: Parent ID converted: {parent_id}")
 
             # Verify parent exists
             parent = Parent.query.get(parent_id)
             if not parent:
+                print(f"DEBUG: Parent not found for ID: {parent_id}")
                 return jsonify({"error": "Parent not found"}), 404
             
             # Verify bus exists
             bus = Bus.query.get(data["bus_id"])
             if not bus:
+                print(f"DEBUG: Bus not found for ID: {data['bus_id']}")
                 return jsonify({"error": "Bus not found"}), 404
+            
+            print(f"DEBUG: Creating booking with parent_id={parent_id}, bus_id={data['bus_id']}")
             
             # Create booking
             booking = Booking(
@@ -528,6 +561,7 @@ def create_app():
             
             db.session.add(booking)
             db.session.commit()
+            print(f"DEBUG: Booking created successfully with ID: {booking.booking_id}")
             
             return jsonify({
                 "id": booking.booking_id,
@@ -543,9 +577,13 @@ def create_app():
             
         except KeyError as e:
             db.session.rollback()
+            print(f"DEBUG: KeyError - {str(e)}")
             return jsonify({"error": f"Invalid field: {str(e)}"}), 400
         except Exception as e:
             db.session.rollback()
+            print(f"DEBUG: Exception - {str(e)}")
+            import traceback
+            traceback.print_exc()
             return jsonify({"error": f"Failed to create booking: {str(e)}"}), 500
     
     #Admin create bookings endpoint
@@ -605,7 +643,7 @@ def create_app():
                 "bus": b.bus.plate_number,
                 "route": b.bus.route.route_name if b.bus.route else None,
                 "pickup": b.pickup_point,
-                "dropoff": b.dropoff_point,
+                "dropoff": b.drop_off_point,
                 "numSeats": b.num_seats,
                 "selectedDays": b.selected_days,
                 "bookingDate": b.booking_date,
