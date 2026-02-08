@@ -47,7 +47,7 @@ export function DashboardSidebar() {
     <Sidebar
       variant="sidebar"
       collapsible="none"
-      className="relative w-[260px] shrink-0 border-r"
+      className="relative w-[260px] shrink-0 border-r !bg-slate-800 !text-white"
     >
       <SidebarHeader className="p-4">
         <Link href="/" className="flex items-center gap-2">
