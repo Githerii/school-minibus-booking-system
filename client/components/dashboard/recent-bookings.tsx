@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react"
 
 type BookingStatus = "confirmed" | "pending" | "completed" | "cancelled"
 
@@ -63,55 +64,98 @@ const recentBookings: Booking[] = [
   },
 ]
 
-const statusStyles: Record<BookingStatus, string> = {
-  confirmed: "bg-green-100 text-green-800 hover:bg-green-100",
-  pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-  completed: "bg-muted text-muted-foreground hover:bg-muted",
-  cancelled: "bg-red-100 text-red-800 hover:bg-red-100",
+const statusConfig: Record<BookingStatus, { 
+  bg: string; 
+  text: string; 
+  border: string;
+  icon: React.ElementType;
+  label: string;
+}> = {
+  confirmed: { 
+    bg: "bg-emerald-100", 
+    text: "text-emerald-700",
+    border: "border-emerald-300",
+    icon: CheckCircle,
+    label: "Confirmed"
+  },
+  pending: { 
+    bg: "bg-amber-100", 
+    text: "text-amber-700",
+    border: "border-amber-300",
+    icon: Clock,
+    label: "Pending"
+  },
+  completed: { 
+    bg: "bg-slate-100", 
+    text: "text-slate-700",
+    border: "border-slate-300",
+    icon: CheckCircle,
+    label: "Completed"
+  },
+  cancelled: { 
+    bg: "bg-rose-100", 
+    text: "text-rose-700",
+    border: "border-rose-300",
+    icon: XCircle,
+    label: "Cancelled"
+  },
 }
 
 export function RecentBookings() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Bookings</CardTitle>
+    <Card className="overflow-hidden border-0 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-school-navy to-school-blue text-white">
+        <CardTitle className="flex items-center gap-2">
+          <CheckCircle className="size-5" />
+          Recent Bookings
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Booking ID</TableHead>
-              <TableHead>Child</TableHead>
-              <TableHead className="hidden md:table-cell">Route</TableHead>
-              <TableHead className="hidden sm:table-cell">Date</TableHead>
-              <TableHead className="hidden sm:table-cell">Time</TableHead>
-              <TableHead>Status</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50">
+              <TableHead className="font-semibold">Booking ID</TableHead>
+              <TableHead className="font-semibold">Child</TableHead>
+              <TableHead className="hidden md:table-cell font-semibold">Route</TableHead>
+              <TableHead className="hidden sm:table-cell font-semibold">Date</TableHead>
+              <TableHead className="hidden sm:table-cell font-semibold">Time</TableHead>
+              <TableHead className="font-semibold">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {recentBookings.map((booking) => (
-              <TableRow key={booking.id}>
-                <TableCell className="font-medium">{booking.id}</TableCell>
-                <TableCell>{booking.childName}</TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {booking.route}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {booking.date}
-                </TableCell>
-                <TableCell className="hidden sm:table-cell">
-                  {booking.time}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="secondary"
-                    className={statusStyles[booking.status]}
-                  >
-                    {booking.status}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
+            {recentBookings.map((booking) => {
+              const config = statusConfig[booking.status]
+              const StatusIcon = config.icon
+              
+              return (
+                <TableRow 
+                  key={booking.id}
+                  className="hover:bg-slate-50 transition-colors"
+                >
+                  <TableCell className="font-medium school-navy">{booking.id}</TableCell>
+                  <TableCell>
+                    <span className="font-medium text-school-navy">{booking.childName}</span>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-slate-600">
+                    {booking.route}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-slate-600">
+                    {booking.date}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-slate-600">
+                    {booking.time}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={`${config.bg} ${config.text} ${config.border} border flex items-center gap-1 w-fit`}
+                    >
+                      <StatusIcon className="size-3" />
+                      {config.label}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </CardContent>
