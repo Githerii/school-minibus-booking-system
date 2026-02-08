@@ -9,12 +9,15 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back!
-          </h1>
-          <p className="text-muted-foreground">
-            Here&apos;s an overview of your children&apos;s transport schedule.
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-3xl animate-wave origin-[70%_70%]">👋</span>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-violet to-primary bg-clip-text text-transparent">
+              Hey there, Super Parent! 👨‍👩‍👧‍👦
+            </h1>
+          </div>
+          <p className="text-muted-foreground hidden md:block text-sm font-medium">
+            Ready for another awesome school day?
           </p>
         </div>
         <Button asChild>
