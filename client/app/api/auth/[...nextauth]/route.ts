@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
           credentials.email === "admin@school.com" &&
           credentials.password === "Admin@123"
         ) {
-          return { id: "1", name: "Admin", email: "admin@test.com" };
+          return { id: "1", name: "Admin", email: "admin@school.com" };
         }
 
         return null;
