@@ -1,4 +1,10 @@
 "use client"
+ 
+import { authOptions } from "../app/api/auth/[...nextauth]/route";
+ 
+
+export { authOptions };
+
 
 // Simple in-memory user store for demo purposes
 // In production, this would be replaced with a real database (Supabase, etc.)
