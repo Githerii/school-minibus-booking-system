@@ -1,15 +1,11 @@
-"use client"
+"use client";
 
-import React from "react"
+import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-
-
-
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Bus, Eye, EyeOff } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Bus, Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,79 +13,63 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { API_BASE_URL } from "@/lib/api"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({})
-  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {}
+    const newErrors: { email?: string; password?: string } = {};
 
     if (!email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email address"
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!password) {
-      newErrors.password = "Password is required"
+      newErrors.password = "Password is required";
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters"
+      newErrors.password = "Password must be at least 6 characters";
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm()) return
+    e.preventDefault();
+    if (!validateForm()) return;
 
-    setIsLoading(true)
-    setErrors({})
+    setIsLoading(true);
+    setErrors({});
 
     try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      })
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false, // prevent auto redirect so you can handle manually
+      });
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setErrors({
-          general: data.error || "Invalid email or password",
-        })
-        return
+      if (result?.error) {
+        setErrors({ general: result.error });
+      } else {
+        router.push("/dashboard"); // redirect after successful login
       }
-
-      // TEMP: store parent_id
-      localStorage.setItem("parent_id", data.parent_id)
-
-      router.push("/dashboard") // or "/" for now
     } catch {
-      setErrors({
-        general: "Unable to connect to server. Please try again.",
-      })
+      setErrors({ general: "Unable to connect to server. Please try again." });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
@@ -211,5 +191,5 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
-  )
+  );
 }
