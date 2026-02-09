@@ -49,50 +49,33 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm()) return
+  e.preventDefault()
+  if (!validateForm()) return
 
-    setIsLoading(true)
-    setErrors({})
+  setIsLoading(true)
+  setErrors({})
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      })
+  try {
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    })
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setErrors({
-          general: data.error || "Invalid email or password",
-        })
-        return
-      }
-
-      // stores JWT
-      localStorage.setItem("token", data.access_token)
-
-      // Redirecting of our user based on role
-      if (data.role === "admin") {
-        router.push("/admin")
-      } else {
-        router.push("/admin")
-      }
-    } catch {
-      setErrors({
-        general: "Unable to connect to server. Please try again.",
-      })
-    } finally {
-      setIsLoading(false)
+    if (res?.error) {
+      setErrors({ general: "Invalid email or password" })
+      return
     }
+
+    router.push("/admin")
+  } catch {
+    setErrors({
+      general: "Unable to sign in. Please try again.",
+    })
+  } finally {
+    setIsLoading(false)
   }
+}
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">
