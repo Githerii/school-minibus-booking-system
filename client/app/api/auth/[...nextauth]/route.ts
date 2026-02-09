@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
 
           if (
           credentials.email === "admin@school.com" &&
-          credentials.password === "123456"
+          credentials.password === "Admin@123"
         ) {
           return { id: "1", name: "Admin", email: "admin@test.com" };
         }
