@@ -10,14 +10,18 @@ export default function DashboardLayout({
 }) {
   return (
     <SidebarProvider>
-    
-      <div className="relative flex min-h-screen w-full">
+      {/* Root container */}
+      <div className="flex h-screen w-full overflow-hidden">
+        {/* Sidebar */}
         <DashboardSidebar />
 
-       
-        <SidebarInset className="flex flex-col flex-1">
+        {/* Content area */}
+        <SidebarInset className="flex min-w-0 flex-1 flex-col">
+          {/* Header (fixed height) */}
           <DashboardHeader />
-          <main className="flex-1 overflow-auto p-4 md:p-6">
+
+          {/* Scrollable page */}
+          <main className="flex-1 overflow-y-auto bg-muted/40 px-4 py-4 md:px-6 md:py-6">
             {children}
           </main>
         </SidebarInset>
