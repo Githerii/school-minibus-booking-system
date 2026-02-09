@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { API_BASE_URL } from "@/lib/api"
+
 
 export default function LoginPage() {
   const router = useRouter()
