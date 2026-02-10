@@ -1,8 +1,12 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import type { NextAuthOptions } from "next-auth"
-// import GoogleProvider from "next-auth/providers/google";
 
+
+export function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "/login";
+}
 
 
 

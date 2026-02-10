@@ -1,19 +1,32 @@
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"   // new server-side authOptions path
-import { redirect } from "next/navigation"
-import Link from "next/link"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getSession } from "next-auth/react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SummaryCards } from "@/components/dashboard/summary"
 import { RecentBookings } from "@/components/dashboard/recent-bookings"
 import { PickupStatus } from "@/components/dashboard/pickup-status"
 
-export default async function DashboardPage() {
-  // ✅ Get the current user session
-  const session = await getServerSession(authOptions)
+export default function DashboardPage() {
+  const [session, setSession] = useState(null);
+  const router = useRouter();
 
-  // 🚫 If no session, redirect to login
-  if (!session) redirect("/login")
+  useEffect(() => {
+    getSession().then((sess) => {
+      if (!sess) {
+        router.push("/login");
+      } else {
+        setSession(sess);
+      }
+    });
+  }, [router]);
+
+  if (!session) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="space-y-6">
@@ -45,5 +58,5 @@ export default async function DashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

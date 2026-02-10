@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import {signIn } from "next-auth/react"
+import { signIn } from "next-auth/react"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
+import { API_BASE_URL } from "@/lib/api"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -49,33 +49,74 @@ export default function LoginPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!validateForm()) return
+    e.preventDefault()
+    if (!validateForm()) return
 
-  setIsLoading(true)
-  setErrors({})
+    setIsLoading(true)
+    setErrors({})
 
-  try {
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    })
+    try {
+      const res = await fetch(`${API_BASE_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      })
 
-    if (res?.error) {
-      setErrors({ general: "Invalid email or password" })
-      return
+      const data = await res.json()
+
+      if (!res.ok) {
+        setErrors({
+          general: data.error || "Invalid email or password",
+        })
+        return
+      }
+      // stores JWT
+      localStorage.setItem("token", data.access_token)
+
+      // Redirecting of our user based on role
+      if (data.role === "admin") {
+        router.push("/admin")
+      } else {
+        router.push("/admin")
+      }
+    } catch {
+      setErrors({
+        general: "Unable to connect to server. Please try again.",
+      })
+    } finally {
+      setIsLoading(false)
+      e.preventDefault()
+      if (!validateForm()) return
+
+      setIsLoading(true)
+      setErrors({})
+
+      try {
+        const res = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        })
+        if (res?.error) {
+          setErrors({ general: "Invalid email or password" })
+          return
+        }
+
+        router.push("/admin")
+      } catch {
+        setErrors({
+          general: "Unable to sign in. Please try again.",
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
-
-    router.push("/admin")
-  } catch {
-    setErrors({
-      general: "Unable to sign in. Please try again.",
-    })
-  } finally {
-    setIsLoading(false)
   }
-}
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12">

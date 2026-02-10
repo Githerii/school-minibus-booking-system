@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { NextAuthOptions } from "next-auth";
 
-import GoogleProvider from "next-auth/providers/google";
+
 
 
 // import { authConfig }  from "next-auth/next";
@@ -29,20 +29,16 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
           if (
-          credentials.email === "admin@school.com" &&
-          credentials.password === "Admin@123"
+          credentials.email === "admin@test.com" &&
+          credentials.password === "123456"
         ) {
-          return { id: "1", name: "Admin", email: "admin@school.com" };
+          return { id: "1", name: "Admin", email: "admin@test.com" };
         }
 
         return null;
       },
     }),
-      GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET
-      })
-
+    
      
   ],
    session: { strategy: "jwt" },
