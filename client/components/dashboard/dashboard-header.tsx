@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Bell, Search } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -17,7 +18,7 @@ import Link from "next/link"
 
 export function DashboardHeader() {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-gray-50 dark:bg-gray-800 px-4 md:px-6 transition-colors duration-300">
       <SidebarTrigger className="md:hidden" />
 
       <div className="hidden flex-1 md:block">
