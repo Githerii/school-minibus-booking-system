@@ -60,6 +60,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Important: allows cookies to be set
         body: JSON.stringify({
           email,
           password,
@@ -75,14 +76,14 @@ export default function LoginPage() {
         return
       }
 
-      // stores JWT
-      localStorage.setItem("token", data.access_token)
+      // No need to store JWT in localStorage anymore
+      // The JWT is now stored as an HTTP-only cookie by the server
 
       // Redirecting of our user based on role
       if (data.role === "admin") {
         router.push("/admin")
       } else {
-        router.push("/admin")
+        router.push("/dashboard")
       }
     } catch {
       setErrors({

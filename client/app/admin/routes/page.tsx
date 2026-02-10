@@ -67,19 +67,15 @@ export default function RoutesPage() {
 
   const fetchRoutes = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Not authenticated");
-        return;
-      }
       const response = await fetch("http://localhost:5000/admin/routes", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include", // Send cookies with request
       });
       if (response.ok) {
         const data = await response.json();
         setRoutes(data);
+      } else if (response.status === 401) {
+        alert("Not authenticated. Please login again.");
+        window.location.href = "/login";
       }
     } catch (error) {
       console.error("Failed to fetch routes:", error);
@@ -124,11 +120,6 @@ export default function RoutesPage() {
     };
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Noth authnticated");
-        return;
-      }
       const url = editingRoute
         ? `http://localhost:5000/admin/routes/${editingRoute}`
         : "http://localhost:5000/admin/routes";
@@ -137,8 +128,8 @@ export default function RoutesPage() {
         method: editingRoute ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include", // Send cookies with request
         body: JSON.stringify(payload),
       });
 
@@ -146,6 +137,9 @@ export default function RoutesPage() {
         alert(editingRoute ? "Route updated successfully!" : "Route saved successfully!");
         handleClearForm();
         fetchRoutes();
+      } else if (response.status === 401) {
+        alert("Not authenticated. Please login again.");
+        window.location.href = "/login";
       } else {
         const error = await response.json();
         alert(error.error || "Failed to save route");
@@ -171,21 +165,17 @@ export default function RoutesPage() {
     if (!confirm("Are you sure you want to delete this route?")) return;
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Not authenticated");
-        return;
-      }
       const response = await fetch(`http://localhost:5000/admin/routes/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include", // Send cookies with request
       });
 
       if (response.ok) {
         alert("Route deleted successfully!");
         fetchRoutes();
+      } else if (response.status === 401) {
+        alert("Not authenticated. Please login again.");
+        window.location.href = "/login";
       }
     } catch (error) {
       console.error("Failed to delete route:", error);
@@ -230,11 +220,8 @@ export default function RoutesPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl border shadow-sm">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Route Management</h1>
-          <p className="text-slate-500 text-sm">Create and manage school bus routes with pickup and dropoff points.</p>
-        </div>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Route Management</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline"

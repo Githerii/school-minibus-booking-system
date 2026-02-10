@@ -118,18 +118,23 @@ export default function BookRidePage() {
     setIsSubmitting(true)
 
     try {
-      const token = localStorage.getItem("token")
+      // Find a bus assigned to this route
+      const busesRes = await fetch("http://localhost:5000/buses", {
+        credentials: "include", // Send cookies with request
+      })
       
-      if (!token) {
-        alert("Please log in to book a ride")
+      if (!busesRes.ok) {
+        alert("Failed to fetch buses. Please try again.")
         setIsSubmitting(false)
         return
       }
       
-      // Find a bus assigned to this route
-      const busesRes = await fetch("http://localhost:5000/buses")
       const buses = await busesRes.json()
+      console.log("All buses:", buses)
+      console.log("Selected route ID:", selectedRoute?.route_id)
+      
       const routeBus = buses.find((b: any) => b.route_id === selectedRoute?.route_id)
+      console.log("Found bus for route:", routeBus)
       
       if (!routeBus) {
         alert("No bus assigned to this route. Please contact admin.")
@@ -150,13 +155,16 @@ export default function BookRidePage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include", // Send cookies with request
         body: JSON.stringify(payload),
       })
 
       if (response.ok) {
         setIsComplete(true)
+      } else if (response.status === 401) {
+        alert("Please log in to book a ride")
+        window.location.href = "/login"
       } else {
         const error = await response.json()
         alert(error.error || "Failed to create booking")

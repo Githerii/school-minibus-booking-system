@@ -3,8 +3,8 @@ from flask import Flask, app, request, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token
-from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from datetime import datetime
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt, set_access_cookies, unset_jwt_cookies
+from datetime import datetime, timedelta
 from app.utils.auth import admin_required
 
 
@@ -17,6 +17,14 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" #still trying to get the concept of config in postgreSQL with a password
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_SECRET_KEY"] = "super-secret-change-this"
+    
+    # Configure JWT to use cookies
+    app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+    app.config["JWT_COOKIE_SECURE"] = False  # Set to True in production with HTTPS
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = False  # Set to True in production for CSRF protection
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=24)
+    app.config["JWT_COOKIE_SAMESITE"] = "Lax"  # Helps prevent CSRF attacks
+    
     jwt = JWTManager(app)
 
     # JWT error handlers
@@ -37,7 +45,9 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
-    CORS(app)
+    
+    # Updated CORS configuration to support credentials
+    CORS(app, supports_credentials=True, origins=["http://localhost:3000"])
 
     #CRUD for routes
     #creation of a new parent or rather registration
@@ -75,7 +85,7 @@ def create_app():
         }), 201
 
     #added login 
-    #this has been updated for JWT
+    #this has been updated for JWT with HTTP-only cookies
     @app.post("/login")
     def login():
         data = request.get_json()
@@ -85,14 +95,26 @@ def create_app():
             return jsonify({"error": "Invalid credentials"}), 401
 
         token = create_access_token(
-        identity=str(parent.parent_id),
-        additional_claims={"role": parent.role}
-    )
+            identity=str(parent.parent_id),
+            additional_claims={"role": parent.role}
+        )
 
-        return jsonify({
-            "access_token": token,
-            "role": parent.role
-        }), 200
+        response = jsonify({
+            "role": parent.role,
+            "message": "Login successful"
+        })
+        
+        # Set the JWT as an HTTP-only cookie
+        set_access_cookies(response, token)
+        
+        return response, 200
+
+    # Add logout endpoint
+    @app.post("/logout")
+    def logout():
+        response = jsonify({"message": "Logout successful"})
+        unset_jwt_cookies(response)
+        return response, 200
 
     @app.get("/parents")
     def get_parents():
@@ -231,11 +253,13 @@ def create_app():
         data = request.get_json()
 
         route.route_name = data.get("route_name", route.route_name)
+        route.start_location = data.get("start_location", route.start_location)
+        route.end_location = data.get("end_location", route.end_location)
 
         db.session.commit()
         return jsonify({"message": "Route updated"}), 200
     
-    #admin put endpoint
+    #Admin put endpoint
     @app.put("/admin/routes/<int:route_id>")
     @admin_required
     def admin_update_route(route_id):
@@ -251,8 +275,8 @@ def create_app():
 
         db.session.commit()
 
-        return jsonify({"message": "Route updated"}), 200
-    
+        return {"message": "Route updated"}
+
 
     @app.delete("/routes/<int:route_id>")
     def delete_route(route_id):
@@ -261,34 +285,48 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Route deleted"}), 200
     
-    #admin delete endpoint
+    #Admin delete endpoint
     @app.delete("/admin/routes/<int:route_id>")
     @admin_required
     def admin_delete_route(route_id):
         route = Route.query.get_or_404(route_id)
+
         db.session.delete(route)
         db.session.commit()
 
-        return jsonify({"message": "Route deleted"}), 200
-    
+        return {"message": "Route deleted"}
 
-    #CRUD for Drivers - bus drivers
+
+    #CRUD FOR DRIVERS
     @app.post("/drivers")
     def create_driver():
         data = request.get_json()
-        driver = Driver(name=data["name"], email=data["email"])
+
+        required_fields = ["name", "email"]
+        if not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields"}), 400
+        
+        driver = Driver(
+            name=data["name"],
+            email=data["email"]
+        )
+
         db.session.add(driver)
         db.session.commit()
-        return jsonify({"message": "Driver created"}), 201
-
-    #ADmin Driver POST endpoint
+        return jsonify({
+            "driver_id": driver.driver_id,
+            "name": driver.name,
+            "email": driver.email
+        }), 201
+    
+    #Admin POST endpoint
     @app.post("/admin/drivers")
     @admin_required
     def admin_create_driver():
         data = request.get_json()
 
         if not data or not data.get("name") or not data.get("email"):
-            return {"error": "Missing required fields"}, 400
+            return jsonify({"error": "Missing required fields"}), 400
 
         driver = Driver(
             name=data["name"],
@@ -298,26 +336,28 @@ def create_app():
         db.session.add(driver)
         db.session.commit()
 
-        return {
+        return jsonify({
             "id": driver.driver_id,
             "name": driver.name,
             "email": driver.email
-        }, 201
+        }), 201
 
 
     @app.get("/drivers")
     def get_drivers():
         drivers = Driver.query.all()
         return jsonify([
-            {"driver_id": d.driver_id, "name": d.name, "email": d.email}
+            {"driver_id": d.driver_id,
+             "name": d.name,
+             "email": d.email}
             for d in drivers
         ])
-    #Admin Drivers GET endpoint
+    
+    #Admin GET endpoint
     @app.get("/admin/drivers")
     @admin_required
     def admin_get_drivers():
         drivers = Driver.query.all()
-
         return jsonify([
             {
                 "id": d.driver_id,
@@ -326,7 +366,6 @@ def create_app():
             }
             for d in drivers
         ])
-
 
 
     @app.put("/drivers/<int:driver_id>")
@@ -340,8 +379,7 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Driver updated"}), 200
     
-    #Admin driver update endpoint
-
+    #Admin put endpoint
     @app.put("/admin/drivers/<int:driver_id>")
     @admin_required
     def admin_update_driver(driver_id):
@@ -355,46 +393,53 @@ def create_app():
 
         return {"message": "Driver updated"}
 
+
     @app.delete("/drivers/<int:driver_id>")
     def delete_driver(driver_id):
         driver = Driver.query.get_or_404(driver_id)
         db.session.delete(driver)
         db.session.commit()
         return jsonify({"message": "Driver deleted"}), 200
-
-    #Admin driver delete endpoint
+    
+    #Admin delete endpoint
     @app.delete("/admin/drivers/<int:driver_id>")
     @admin_required
     def admin_delete_driver(driver_id):
         driver = Driver.query.get_or_404(driver_id)
+
         db.session.delete(driver)
         db.session.commit()
 
         return {"message": "Driver deleted"}
+
 
     #CRUD for Buses
     @app.post("/buses")
     def create_bus():
         data = request.get_json()
 
-        required_fields = ["plate_number", "route_id", "driver_id"]
+        required_fields = ["plate_number", "capacity", "route_id", "driver_id"]
         if not all(field in data for field in required_fields):
             return jsonify({"error": "Missing required fields"}), 400
 
         bus = Bus(
             plate_number=data["plate_number"],
+            capacity=data["capacity"],
             route_id=data["route_id"],
-            driver_id=data["driver_id"],
-            capacity=data["capacity"]
+            driver_id=data["driver_id"]
         )
+
         db.session.add(bus)
         db.session.commit()
-        return jsonify({"bus_id": bus.bus_id,
-                        "plate_number": bus.plate_number,
-                        "capacity": bus.capacity
-                        }), 201
+        return jsonify({
+            "bus_id": bus.bus_id,
+            "plate_number": bus.plate_number,
+            "capacity": bus.capacity,
+            "route_id": bus.route_id,
+            "driver_id": bus.driver_id
+        }), 201
     
-    #admin buses POST endpoitn
+    #Admin POST endpoint
     @app.post("/admin/buses")
     @admin_required
     def admin_create_bus():
@@ -419,7 +464,9 @@ def create_app():
             "plateNumber": bus.plate_number,
             "capacity": bus.capacity,
             "routeId": bus.route_id,
-            "driverId": bus.driver_id
+            "routeName": bus.route.route_name if bus.route else None,
+            "driverId": bus.driver_id,
+            "driverName": bus.driver.name if bus.driver else None
         }, 201
 
 
@@ -430,31 +477,32 @@ def create_app():
             {
                 "bus_id": b.bus_id,
                 "plate_number": b.plate_number,
-                "route_id": b.route_id,
-                "route": b.route.route_name,
-                "driver": b.driver.name,
-                "capacity": b.capacity
+                "capacity": b.capacity,
+                "route_id": b.route_id,  # Added route_id for booking
+                "route": b.route.route_name if b.route else None,
+                "driver": b.driver.name if b.driver else None
             }
             for b in buses
         ])
-    #Admin buses GET endpoint
+    
+    #Admin GET endpoint
     @app.get("/admin/buses")
     @admin_required
     def admin_get_buses():
         buses = Bus.query.all()
-
         return jsonify([
             {
                 "id": b.bus_id,
                 "plateNumber": b.plate_number,
                 "capacity": b.capacity,
                 "routeId": b.route_id,
-                "driverId": b.driver_id,
                 "routeName": b.route.route_name if b.route else None,
+                "driverId": b.driver_id,
                 "driverName": b.driver.name if b.driver else None
             }
             for b in buses
         ])
+
 
     @app.put("/buses/<int:bus_id>")
     def update_bus(bus_id):
@@ -462,12 +510,14 @@ def create_app():
         data = request.get_json()
 
         bus.plate_number = data.get("plate_number", bus.plate_number)
+        bus.capacity = data.get("capacity", bus.capacity)
         bus.route_id = data.get("route_id", bus.route_id)
         bus.driver_id = data.get("driver_id", bus.driver_id)
 
         db.session.commit()
         return jsonify({"message": "Bus updated"}), 200
-    #admin update bus endpoint
+    
+    #Admin PUT endpoint
     @app.put("/admin/buses/<int:bus_id>")
     @admin_required
     def admin_update_bus(bus_id):
@@ -484,7 +534,6 @@ def create_app():
         return {"message": "Bus updated"}
 
 
-
     @app.delete("/buses/<int:bus_id>")
     def delete_bus(bus_id):
         bus = Bus.query.get_or_404(bus_id)
@@ -492,7 +541,6 @@ def create_app():
         db.session.commit()
         return jsonify({"message": "Bus deleted"}), 200
     
-    #Admin Delete bus endpoiny
     @app.delete("/admin/buses/<int:bus_id>")
     @admin_required
     def admin_delete_bus(bus_id):

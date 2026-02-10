@@ -111,8 +111,8 @@ export default function RegisterPage() {
         return
       }
 
-      // Temporary storage until JWT is added
-      localStorage.setItem("parent_id", data.parent_id)
+      // No need to store anything in localStorage
+      // User will login after registration and get HTTP-only cookie
 
       router.push("/login")
     } catch {

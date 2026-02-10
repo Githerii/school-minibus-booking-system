@@ -4,17 +4,18 @@ export async function fetchWithAuth(
   endpoint: string,
   options: RequestInit = {}
 ) {
-  const token = localStorage.getItem("token")
-
+  // No need to manually get token from localStorage
+  // Cookies are automatically sent with credentials: 'include'
+  
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   }
 
   return fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
+    credentials: 'include', // This ensures cookies are sent with requests
   })
 }
 
