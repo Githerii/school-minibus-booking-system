@@ -44,45 +44,50 @@ export function PickupStatus() {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
           <Calendar className="size-5" />
           Upcoming Bookings
         </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center text-muted-foreground py-4">Loading...</div>
+          <div className="text-center text-muted-foreground py-4 dark:text-gray-400">Loading...</div>
         ) : upcomingBookings.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-center text-muted-foreground py-8 dark:text-gray-400">
             <p className="text-sm">No upcoming bookings</p>
             <p className="text-xs mt-1">Book a ride to see it here</p>
           </div>
         ) : (
           <div className="space-y-4">
             {upcomingBookings.map((booking) => (
-              <div key={booking.booking_id} className="border-b pb-3 last:border-0">
+              <div 
+                key={booking.booking_id} 
+                className="border-b pb-3 last:border-0 group cursor-pointer transition-all duration-300 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-md shadow-blue-100/50 rounded-lg p-3 -mx-3 scale-[1.02] border-transparent dark:from-gray-700 dark:to-gray-700 dark:shadow-gray-900/50"
+              >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Booking #{booking.booking_id}</p>
-                    <Badge variant="secondary" className="mt-1 text-xs">
+                    <p className="text-sm font-medium transition-colors duration-300 text-blue-700 dark:text-blue-300">
+                      Booking #{booking.booking_id}
+                    </p>
+                    <Badge variant="secondary" className="mt-1 text-xs transition-all duration-300 scale-105 shadow-sm bg-blue-200 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                       {booking.status}
                     </Badge>
                   </div>
                 </div>
                 <div className="space-y-1 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="size-3" />
+                  <div className="flex items-center gap-2 transition-colors duration-300 text-blue-600 dark:text-blue-400">
+                    <MapPin className="size-3 transition-transform duration-300 scale-110" />
                     <span>From: {booking.pickup}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="size-3" />
+                  <div className="flex items-center gap-2 transition-colors duration-300 text-blue-600 dark:text-blue-400">
+                    <MapPin className="size-3 transition-transform duration-300 scale-110" />
                     <span>To: {booking.dropoff}</span>
                   </div>
                   {booking.selectedDays && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="size-3" />
+                    <div className="flex items-center gap-2 transition-colors duration-300 text-blue-600 dark:text-blue-400">
+                      <Calendar className="size-3 transition-transform duration-300 scale-110" />
                       <span>{JSON.parse(booking.selectedDays).length} days scheduled</span>
                     </div>
                   )}
