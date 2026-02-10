@@ -26,10 +26,10 @@ interface Booking {
 }
 
 const statusStyles: Record<BookingStatus, string> = {
-  booked: "bg-green-100 text-green-800 hover:bg-green-100",
-  pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-  completed: "bg-muted text-muted-foreground hover:bg-muted",
-  cancelled: "bg-red-100 text-red-800 hover:bg-red-100",
+  booked: "bg-green-200 text-green-800",
+  pending: "bg-yellow-200 text-yellow-800",
+  completed: "bg-slate-200 text-slate-700",
+  cancelled: "bg-red-200 text-red-800",
 }
 
 export function RecentBookings() {
@@ -61,47 +61,54 @@ export function RecentBookings() {
   }
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
-        <CardTitle>Recent Bookings</CardTitle>
+        <CardTitle className="dark:text-gray-100">Recent Bookings</CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center text-muted-foreground py-8">Loading bookings...</div>
+          <div className="text-center text-muted-foreground py-8 dark:text-gray-400">Loading bookings...</div>
         ) : bookings.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-center text-muted-foreground py-8 dark:text-gray-400">
             No bookings yet. Book your first ride!
           </div>
         ) : (
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Booking ID</TableHead>
-                <TableHead>Bus</TableHead>
-                <TableHead className="hidden md:table-cell">Route</TableHead>
-                <TableHead className="hidden sm:table-cell">Seats</TableHead>
-                <TableHead className="hidden sm:table-cell">Date</TableHead>
-                <TableHead>Status</TableHead>
+              <TableRow className="dark:border-gray-700">
+                <TableHead className="dark:text-gray-300">Booking ID</TableHead>
+                <TableHead className="dark:text-gray-300">Bus</TableHead>
+                <TableHead className="hidden md:table-cell dark:text-gray-300">Route</TableHead>
+                <TableHead className="hidden sm:table-cell dark:text-gray-300">Seats</TableHead>
+                <TableHead className="hidden sm:table-cell dark:text-gray-300">Date</TableHead>
+                <TableHead className="dark:text-gray-300">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {bookings.map((booking) => (
-                <TableRow key={booking.booking_id}>
-                  <TableCell className="font-medium">#{booking.booking_id}</TableCell>
-                  <TableCell>{booking.bus}</TableCell>
-                  <TableCell className="hidden md:table-cell">
+                <TableRow 
+                  key={booking.booking_id}
+                  className="cursor-pointer transition-all duration-300 bg-slate-50 shadow-md shadow-slate-100 scale-[1.01] border-transparent dark:bg-gray-700 dark:border-gray-600"
+                >
+                  <TableCell className="font-medium transition-colors duration-300 text-blue-600 dark:text-blue-400">
+                    #{booking.booking_id}
+                  </TableCell>
+                  <TableCell className="transition-colors duration-300 text-blue-600 dark:text-blue-400">
+                    {booking.bus}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell transition-colors duration-300 text-blue-600 dark:text-blue-400">
                     {booking.route || "N/A"}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell className="hidden sm:table-cell transition-colors duration-300 text-blue-600 dark:text-blue-400">
                     {booking.numSeats || 1}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">
+                  <TableCell className="hidden sm:table-cell transition-colors duration-300 text-blue-600 dark:text-blue-400">
                     {booking.bookingDate}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={statusStyles[booking.status]}
+                      className={`${statusStyles[booking.status]} transition-all duration-300 scale-105 shadow-sm`}
                     >
                       {booking.status}
                     </Badge>
