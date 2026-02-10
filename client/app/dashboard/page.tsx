@@ -1,5 +1,5 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "../api/auth/[...nextauth]/route"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"   // new server-side authOptions path
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Plus } from "lucide-react"
