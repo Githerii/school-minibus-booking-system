@@ -1,10 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Bell, Search } from "lucide-react"
+import { useSession, signOut } from "next-auth/react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -17,48 +15,47 @@ import {
 import Link from "next/link"
 
 export function DashboardHeader() {
-  return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-gray-50 dark:bg-gray-800 px-4 md:px-6 transition-colors duration-300">
-      <SidebarTrigger className="md:hidden" />
+  const { data: session } = useSession()
 
-      <div className="hidden flex-1 md:block">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search bookings..."
-            className="pl-9"
-          />
-        </div>
+  const user = session?.user
+
+  return (
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-gray-50 dark:bg-gray-800 px-6 transition-colors duration-300">
+      
+      <div className="flex items-center gap-4">
+        <SidebarTrigger />
+        <h1 className="text-lg font-semibold tracking-tight">
+          Dashboard
+        </h1>
       </div>
 
-      <div className="flex flex-1 items-center justify-end gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="size-5" />
-          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
-            2
-          </span>
-          <span className="sr-only">Notifications</span>
-        </Button>
-
+      {user && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative size-9 rounded-full">
-              <Avatar className="size-9">
-                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+            <Button
+              variant="ghost"
+              className="flex items-center gap-3 rounded-full px-2 py-1 hover:bg-muted"
+            >
+              <Avatar className="h-9 w-9">
+                <AvatarImage src={user.image || ""} alt={user.name || "User"} />
+                <AvatarFallback>
+                  {user.name?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
+
+              <div className="hidden sm:flex flex-col items-start text-left">
+                <span className="text-sm font-medium leading-none">
+                  {user.name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {user.email}
+                </span>
+              </div>
             </Button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">Jane Doe</p>
-                <p className="text-xs text-muted-foreground">
-                  jane.doe@example.com
-                </p>
-              </div>
-            </DropdownMenuLabel>
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/dashboard/profile">Profile</Link>
@@ -67,12 +64,15 @@ export function DashboardHeader() {
               <Link href="/dashboard/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/login">Sign Out</Link>
+            <DropdownMenuItem
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="cursor-pointer"
+            >
+              Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      )}
     </header>
   )
 }
