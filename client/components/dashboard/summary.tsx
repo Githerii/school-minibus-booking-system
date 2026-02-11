@@ -1,57 +1,57 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { CalendarCheck, Clock, MapPin, Users } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react";
+import { CalendarCheck, Clock, MapPin, Users } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function SummaryCards() {
   const [stats, setStats] = useState({
     activeBookings: 0,
-    nextPickup: "Loading...",
+    nextPickup: "—",
     totalSeats: 0,
     activeRoutes: 0,
-  })
+  });
 
   useEffect(() => {
-    fetchStats()
-  }, [])
+    fetchStats();
+  }, []);
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem("token")
-      
-      // Fetch bookings
-      const bookingsRes = await fetch("http://localhost:5000/bookings", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      
+      // Bookings (auth)
+      const bookingsRes = await fetchWithAuth("/bookings");
       if (bookingsRes.ok) {
-        const bookings = await bookingsRes.json()
-        const activeBookings = bookings.filter((b: any) => b.status === "booked").length
-        const totalSeats = bookings.reduce((sum: number, b: any) => sum + (b.numSeats || 1), 0)
-        
-        setStats(prev => ({
+        const bookings = await bookingsRes.json();
+        const activeBookings = bookings.filter((b: any) => (b.status || "").toLowerCase() === "booked").length;
+        const totalSeats = bookings.reduce(
+          (sum: number, b: any) => sum + (b.numSeats || 1),
+          0
+        );
+
+        setStats((prev) => ({
           ...prev,
           activeBookings,
           totalSeats,
-        }))
+        }));
+      } else {
+        // Not logged in / invalid token -> show zeros
+        setStats((prev) => ({ ...prev, activeBookings: 0, totalSeats: 0 }));
       }
 
-      // Fetch routes
-      const routesRes = await fetch("http://localhost:5000/routes")
+      // Routes (public)
+      const routesRes = await fetch("http://localhost:5000/routes");
       if (routesRes.ok) {
-        const routes = await routesRes.json()
-        setStats(prev => ({
+        const routes = await routesRes.json();
+        setStats((prev) => ({
           ...prev,
           activeRoutes: routes.length,
-        }))
+        }));
       }
     } catch (error) {
-      console.error("Failed to fetch stats:", error)
+      console.error("Failed to fetch stats:", error);
     }
-  }
+  };
 
   const summaryData = [
     {
@@ -94,7 +94,7 @@ export function SummaryCards() {
       textHoverClass: "text-amber-700",
       accentClass: "bg-amber-50 text-amber-700",
     },
-  ]
+  ];
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -120,5 +120,5 @@ export function SummaryCards() {
         </Card>
       ))}
     </div>
-  )
+  );
 }
