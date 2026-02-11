@@ -1,22 +1,33 @@
-export const API_BASE_URL = "http://localhost:5000"
+import { getSession } from "next-auth/react";
 
+export const API_BASE_URL = "http://localhost:5000";
+
+/**
+ * Fetch wrapper that attaches the NextAuth access token (Flask JWT)
+ * to Authorization: Bearer <token>
+ */
 export async function fetchWithAuth(
   endpoint: string,
   options: RequestInit = {}
 ) {
-  const token = localStorage.getItem("token")
+  const session = await getSession();
+  const token = (session as any)?.accessToken;
 
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
+  };
 
   return fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers,
-  })
+  });
 }
+
+/* =========================
+   Admin Dashboard Endpoints
+   ========================= */
 
 export interface AdminRoute {
   id: number;
@@ -29,11 +40,7 @@ export interface AdminRoute {
 
 export async function getAdminRoutes(): Promise<AdminRoute[]> {
   const res = await fetchWithAuth("/admin/routes");
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch routes");
-  }
-
+  if (!res.ok) throw new Error("Failed to fetch routes");
   return res.json();
 }
 
@@ -49,11 +56,11 @@ export async function createAdminRoute(payload: {
   });
 
   if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || "Failed to create route");
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as any).error || "Failed to create route");
   }
 
-  return res.json(); // returns the route that has been created
+  return res.json();
 }
 
 export async function updateAdminRoute(
@@ -67,25 +74,16 @@ export async function updateAdminRoute(
 ) {
   const res = await fetchWithAuth(`/admin/routes/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) {
-    throw new Error("Failed to update route");
-  }
-
+  if (!res.ok) throw new Error("Failed to update route");
   return res.json();
 }
 
 export async function deleteAdminRoute(id: number) {
-  const res = await fetchWithAuth(`/admin/routes/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to delete route");
-  }
+  const res = await fetchWithAuth(`/admin/routes/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Failed to delete route");
 }
 
 export interface AdminDriver {
@@ -123,6 +121,7 @@ export async function updateAdminDriver(
   });
 
   if (!res.ok) throw new Error("Failed to update driver");
+  return res.json();
 }
 
 export async function deleteAdminDriver(id: number) {
@@ -179,6 +178,7 @@ export async function updateAdminBus(
   });
 
   if (!res.ok) throw new Error("Failed to update bus");
+  return res.json();
 }
 
 export async function deleteAdminBus(id: number) {
@@ -237,6 +237,7 @@ export async function updateAdminBooking(
   });
 
   if (!res.ok) throw new Error("Failed to update booking");
+  return res.json();
 }
 
 export async function deleteAdminBooking(id: number) {
@@ -256,15 +257,13 @@ export interface AdminParent {
 
 export async function getAdminParents(): Promise<AdminParent[]> {
   const res = await fetchWithAuth("/admin/parents");
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch parents");
-  }
-
+  if (!res.ok) throw new Error("Failed to fetch parents");
   return res.json();
 }
 
-// Parent Dashboard Endpoints
+/* =========================
+   Parent Dashboard Endpoints
+   ========================= */
 
 export interface ParentBooking {
   booking_id: number;
@@ -294,6 +293,7 @@ export async function createParentBooking(payload: {
   if (!res.ok) throw new Error("Failed to create booking");
   return res.json();
 }
+
 export async function updateParentBooking(
   id: number,
   payload: {

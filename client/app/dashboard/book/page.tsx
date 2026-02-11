@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Bus,
   Calendar,
@@ -10,12 +10,11 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  Clock,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -23,28 +22,31 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
+} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+import { API_BASE_URL, fetchWithAuth } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Route {
-  route_id: number
-  route_name: string
-  pickup_spots?: string
-  dropoff_spots?: string
+  route_id: number;
+  route_name: string;
+  pickup_spots?: string;
+  dropoff_spots?: string;
 }
 
 interface RouteSpot {
-  lat: number
-  lng: number
-  name: string
+  lat: number;
+  lng: number;
+  name: string;
 }
 
 const steps = [
@@ -53,88 +55,102 @@ const steps = [
   { id: 3, name: "Pickup & Dropoff", icon: MapPin },
   { id: 4, name: "Schedule", icon: Calendar },
   { id: 5, name: "Confirm", icon: CheckCircle2 },
-]
+];
 
 export default function BookRidePage() {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [numSeats, setNumSeats] = useState("1")
-  const [routes, setRoutes] = useState<Route[]>([])
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null)
-  const [pickupSpots, setPickupSpots] = useState<RouteSpot[]>([])
-  const [dropoffSpots, setDropoffSpots] = useState<RouteSpot[]>([])
-  const [selectedPickup, setSelectedPickup] = useState("")
-  const [selectedDropoff, setSelectedDropoff] = useState("")
-  const [selectedDates, setSelectedDates] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isComplete, setIsComplete] = useState(false)
+  const router = useRouter();
+  const { status } = useSession();
+
+  const [currentStep, setCurrentStep] = useState(1);
+  const [numSeats, setNumSeats] = useState("1");
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [pickupSpots, setPickupSpots] = useState<RouteSpot[]>([]);
+  const [dropoffSpots, setDropoffSpots] = useState<RouteSpot[]>([]);
+  const [selectedPickup, setSelectedPickup] = useState("");
+  const [selectedDropoff, setSelectedDropoff] = useState("");
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/login");
+  }, [status, router]);
 
   useEffect(() => {
-    fetchRoutes()
-  }, [])
+    fetchRoutes();
+  }, []);
 
   const fetchRoutes = async () => {
     try {
-      const response = await fetch("http://localhost:5000/routes")
+      const response = await fetch(`${API_BASE_URL}/routes`);
       if (response.ok) {
-        const data = await response.json()
-        setRoutes(data)
+        const data = await response.json();
+        setRoutes(data);
       }
     } catch (error) {
-      console.error("Failed to fetch routes:", error)
+      console.error("Failed to fetch routes:", error);
     }
-  }
+  };
 
   const handleRouteSelect = (routeId: string) => {
-    const route = routes.find(r => r.route_id === parseInt(routeId))
+    const route = routes.find((r) => r.route_id === parseInt(routeId));
     if (route) {
-      setSelectedRoute(route)
-      
+      setSelectedRoute(route);
+
       // Parse pickup and dropoff spots
       if (route.pickup_spots) {
         try {
-          setPickupSpots(JSON.parse(route.pickup_spots))
-        } catch (e) {
-          setPickupSpots([])
+          setPickupSpots(JSON.parse(route.pickup_spots));
+        } catch {
+          setPickupSpots([]);
         }
+      } else {
+        setPickupSpots([]);
       }
-      
+
       if (route.dropoff_spots) {
         try {
-          setDropoffSpots(JSON.parse(route.dropoff_spots))
-        } catch (e) {
-          setDropoffSpots([])
+          setDropoffSpots(JSON.parse(route.dropoff_spots));
+        } catch {
+          setDropoffSpots([]);
         }
+      } else {
+        setDropoffSpots([]);
       }
+
+      // reset selections when route changes
+      setSelectedPickup("");
+      setSelectedDropoff("");
     }
-  }
+  };
 
   const handleDateToggle = (date: string) => {
     setSelectedDates((prev) =>
       prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]
-    )
-  }
+    );
+  };
 
   const handleSubmit = async () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token")
-      
-      if (!token) {
-        alert("Please log in to book a ride")
-        setIsSubmitting(false)
-        return
+      // Find a bus assigned to this route (public endpoint, no auth required)
+      const busesRes = await fetch(`${API_BASE_URL}/buses`);
+      if (!busesRes.ok) {
+        alert("Failed to fetch buses. Please try again.");
+        return;
       }
-      
-      // Find a bus assigned to this route
-      const busesRes = await fetch("http://localhost:5000/buses")
-      const buses = await busesRes.json()
-      const routeBus = buses.find((b: any) => b.route_id === selectedRoute?.route_id)
-      
+
+      const buses = await busesRes.json();
+      const routeBus = buses.find(
+        (b: any) => b.route_id === selectedRoute?.route_id
+      );
+
       if (!routeBus) {
-        alert("No bus assigned to this route. Please contact admin.")
-        setIsSubmitting(false)
-        return
+        alert("No bus assigned to this route. Please contact admin.");
+        return;
       }
 
       const payload = {
@@ -143,57 +159,54 @@ export default function BookRidePage() {
         drop_off_point: selectedDropoff,
         num_seats: parseInt(numSeats),
         selected_days: JSON.stringify(selectedDates),
-        booking_date: new Date().toISOString().split('T')[0],
-      }
+        booking_date: new Date().toISOString().split("T")[0],
+      };
 
-      const response = await fetch("http://localhost:5000/bookings", {
+      // ✅ Authenticated call (NextAuth session token)
+      const response = await fetchWithAuth("/bookings", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(payload),
-      })
+      });
 
       if (response.ok) {
-        setIsComplete(true)
+        setIsComplete(true);
       } else {
-        const error = await response.json()
-        alert(error.error || "Failed to create booking")
+        const error = await response.json().catch(() => ({}));
+        alert((error as any).error || "Failed to create booking");
       }
     } catch (error: any) {
-      console.error("Booking error:", error)
-      alert("Failed to create booking")
+      console.error("Booking error:", error);
+      alert(error?.message || "Failed to create booking");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return parseInt(numSeats) > 0
+        return parseInt(numSeats) > 0;
       case 2:
-        return selectedRoute !== null
+        return selectedRoute !== null;
       case 3:
-        return selectedPickup !== "" && selectedDropoff !== ""
+        return selectedPickup !== "" && selectedDropoff !== "";
       case 4:
-        return selectedDates.length > 0
+        return selectedDates.length > 0;
       default:
-        return true
+        return true;
     }
-  }
+  };
 
   // Generate next 30 days for calendar
   const generateDates = () => {
-    const dates = []
+    const dates: string[] = [];
     for (let i = 1; i <= 30; i++) {
-      const date = new Date()
-      date.setDate(date.getDate() + i)
-      dates.push(date.toISOString().split('T')[0])
+      const date = new Date();
+      date.setDate(date.getDate() + i);
+      dates.push(date.toISOString().split("T")[0]);
     }
-    return dates
-  }
+    return dates;
+  };
 
   if (isComplete) {
     return (
@@ -229,7 +242,9 @@ export default function BookRidePage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Days:</span>
-                  <span className="font-medium">{selectedDates.length} selected</span>
+                  <span className="font-medium">
+                    {selectedDates.length} selected
+                  </span>
                 </div>
               </div>
             </div>
@@ -244,7 +259,7 @@ export default function BookRidePage() {
           </CardFooter>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -258,9 +273,7 @@ export default function BookRidePage() {
         </Button>
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Book a Ride</h1>
-          <p className="text-muted-foreground">
-            Schedule transport for your family
-          </p>
+          <p className="text-muted-foreground">Schedule transport for your family</p>
         </div>
       </div>
 
@@ -307,9 +320,7 @@ export default function BookRidePage() {
           <span className="font-medium">
             Step {currentStep} of {steps.length}
           </span>
-          <span className="text-muted-foreground">
-            {steps[currentStep - 1].name}
-          </span>
+          <span className="text-muted-foreground">{steps[currentStep - 1].name}</span>
         </div>
         <div className="mt-2 h-2 rounded-full bg-muted">
           <div
@@ -330,8 +341,9 @@ export default function BookRidePage() {
             {currentStep === 5 && "Review and confirm your booking"}
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-          {/* Step 1: Number of Seats */}
+          {/* Step 1 */}
           {currentStep === 1 && (
             <div className="space-y-4">
               <div>
@@ -345,18 +357,18 @@ export default function BookRidePage() {
                   onChange={(e) => setNumSeats(e.target.value)}
                   placeholder="Enter number of seats"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="mt-1 text-xs text-muted-foreground">
                   How many seats do you need to book?
                 </p>
               </div>
             </div>
           )}
 
-          {/* Step 2: Choose Route */}
+          {/* Step 2 */}
           {currentStep === 2 && (
             <div className="space-y-4">
               {routes.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
+                <div className="py-8 text-center text-muted-foreground">
                   No routes available. Please contact admin.
                 </div>
               ) : (
@@ -375,7 +387,10 @@ export default function BookRidePage() {
                           : "hover:bg-muted/50"
                       }`}
                     >
-                      <RadioGroupItem value={route.route_id.toString()} id={route.route_id.toString()} />
+                      <RadioGroupItem
+                        value={route.route_id.toString()}
+                        id={route.route_id.toString()}
+                      />
                       <div className="flex size-10 items-center justify-center rounded-full bg-muted">
                         <Bus className="size-5 text-muted-foreground" />
                       </div>
@@ -383,7 +398,9 @@ export default function BookRidePage() {
                         <div className="font-medium">{route.route_name}</div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <MapPin className="size-3" />
-                          {route.pickup_spots ? `${JSON.parse(route.pickup_spots).length} pickup spots` : 'No pickup spots'}
+                          {route.pickup_spots
+                            ? `${JSON.parse(route.pickup_spots).length} pickup spots`
+                            : "No pickup spots"}
                         </div>
                       </div>
                     </Label>
@@ -393,7 +410,7 @@ export default function BookRidePage() {
             </div>
           )}
 
-          {/* Step 3: Pickup & Dropoff */}
+          {/* Step 3 */}
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
@@ -404,7 +421,9 @@ export default function BookRidePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {pickupSpots.length === 0 ? (
-                      <SelectItem value="none" disabled>No pickup spots available</SelectItem>
+                      <SelectItem value="none" disabled>
+                        No pickup spots available
+                      </SelectItem>
                     ) : (
                       pickupSpots.map((spot, idx) => (
                         <SelectItem key={idx} value={spot.name}>
@@ -424,7 +443,9 @@ export default function BookRidePage() {
                   </SelectTrigger>
                   <SelectContent>
                     {dropoffSpots.length === 0 ? (
-                      <SelectItem value="none" disabled>No dropoff spots available</SelectItem>
+                      <SelectItem value="none" disabled>
+                        No dropoff spots available
+                      </SelectItem>
                     ) : (
                       dropoffSpots.map((spot, idx) => (
                         <SelectItem key={idx} value={spot.name}>
@@ -438,11 +459,11 @@ export default function BookRidePage() {
             </div>
           )}
 
-          {/* Step 4: Schedule/Calendar */}
+          {/* Step 4 */}
           {currentStep === 4 && (
             <div className="space-y-4">
               <Label>Select Dates (Click to toggle)</Label>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 max-h-96 overflow-y-auto">
+              <div className="grid max-h-96 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-5">
                 {generateDates().map((date) => (
                   <div
                     key={date}
@@ -455,13 +476,11 @@ export default function BookRidePage() {
                   >
                     <div className="text-center">
                       <div className="text-xs font-medium">
-                        {new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}
+                        {new Date(date).toLocaleDateString("en-US", { weekday: "short" })}
                       </div>
-                      <div className="text-sm">
-                        {new Date(date).getDate()}
-                      </div>
+                      <div className="text-sm">{new Date(date).getDate()}</div>
                       <div className="text-xs text-muted-foreground">
-                        {new Date(date).toLocaleDateString('en-US', { month: 'short' })}
+                        {new Date(date).toLocaleDateString("en-US", { month: "short" })}
                       </div>
                     </div>
                   </div>
@@ -473,7 +492,7 @@ export default function BookRidePage() {
             </div>
           )}
 
-          {/* Step 5: Confirm */}
+          {/* Step 5 */}
           {currentStep === 5 && (
             <div className="space-y-4">
               <div className="rounded-lg bg-muted p-4">
@@ -519,6 +538,7 @@ export default function BookRidePage() {
             </div>
           )}
         </CardContent>
+
         <CardFooter className="flex justify-between">
           <Button
             variant="outline"
@@ -529,6 +549,7 @@ export default function BookRidePage() {
             <ArrowLeft className="mr-2 size-4" />
             Back
           </Button>
+
           {currentStep < 5 ? (
             <Button
               onClick={() => setCurrentStep((prev) => prev + 1)}
@@ -545,5 +566,5 @@ export default function BookRidePage() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

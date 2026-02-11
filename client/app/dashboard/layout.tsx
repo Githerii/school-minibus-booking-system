@@ -30,7 +30,7 @@ export default function DashboardLayout({
         const data = await res.json();
 
         if (data.role !== "parent") {
-          router.replace("/admin"); // or "/"
+          router.replace("/login");
           return;
         }
 
@@ -46,9 +46,7 @@ export default function DashboardLayout({
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">
-          Checking parent access…
-        </p>
+        <p className="text-muted-foreground">Checking parent access…</p>
       </div>
     );
   }
@@ -57,12 +55,9 @@ export default function DashboardLayout({
     <SidebarProvider>
       <div className="relative flex min-h-screen w-full">
         <DashboardSidebar />
-
-        <SidebarInset className="flex flex-col flex-1">
+        <SidebarInset>
           <DashboardHeader />
-          <main className="flex-1 overflow-auto p-4 md:p-6">
-            {children}
-          </main>
+          <main className="p-4">{children}</main>
         </SidebarInset>
       </div>
     </SidebarProvider>

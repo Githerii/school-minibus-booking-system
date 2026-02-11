@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { MapPin, Save, Trash2, Plus, Edit, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { Save, Trash2, Edit, X } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,38 +54,40 @@ interface Route {
 }
 
 export default function RoutesPage() {
+  const { status: sessionStatus } = useSession();
+
   const [routeName, setRouteName] = useState("");
   const [startPoint, setStartPoint] = useState<[number, number] | null>(null);
   const [endPoint, setEndPoint] = useState<[number, number] | null>(null);
   const [pickupSpots, setPickupSpots] = useState<RouteSpot[]>([]);
   const [dropoffSpots, setDropoffSpots] = useState<RouteSpot[]>([]);
-  const [mode, setMode] = useState<"start" | "end" | "pickup" | "dropoff">("start");
+  const [mode, setMode] = useState<"start" | "end" | "pickup" | "dropoff">(
+    "start"
+  );
   const [spotName, setSpotName] = useState("");
   const [routes, setRoutes] = useState<Route[]>([]);
   const [editingRoute, setEditingRoute] = useState<number | null>(null);
+  const [loadingRoutes, setLoadingRoutes] = useState(false);
 
   useEffect(() => {
-    fetchRoutes();
-  }, []);
+    if (sessionStatus === "authenticated") fetchRoutes();
+  }, [sessionStatus]);
 
   const fetchRoutes = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Not authenticated");
-        return;
+      setLoadingRoutes(true);
+      const response = await fetchWithAuth("/admin/routes");
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error((err as any).error || "Failed to fetch routes");
       }
-      const response = await fetch("http://localhost:5000/admin/routes", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setRoutes(data);
-      }
+      const data = await response.json();
+      setRoutes(data);
     } catch (error) {
       console.error("Failed to fetch routes:", error);
+      alert("Failed to fetch routes. Are you logged in as admin?");
+    } finally {
+      setLoadingRoutes(false);
     }
   };
 
@@ -92,10 +97,16 @@ export default function RoutesPage() {
     } else if (mode === "end") {
       setEndPoint(coords);
     } else if (mode === "pickup" && spotName.trim()) {
-      setPickupSpots([...pickupSpots, { lat: coords[0], lng: coords[1], name: spotName }]);
+      setPickupSpots([
+        ...pickupSpots,
+        { lat: coords[0], lng: coords[1], name: spotName },
+      ]);
       setSpotName("");
     } else if (mode === "dropoff" && spotName.trim()) {
-      setDropoffSpots([...dropoffSpots, { lat: coords[0], lng: coords[1], name: spotName }]);
+      setDropoffSpots([
+        ...dropoffSpots,
+        { lat: coords[0], lng: coords[1], name: spotName },
+      ]);
       setSpotName("");
     }
   };
@@ -124,21 +135,13 @@ export default function RoutesPage() {
     };
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Noth authnticated");
-        return;
-      }
       const url = editingRoute
-        ? `http://localhost:5000/admin/routes/${editingRoute}`
-        : "http://localhost:5000/admin/routes";
-      
-      const response = await fetch(url, {
+        ? `/admin/routes/${editingRoute}`
+        : "/admin/routes";
+
+      const response = await fetchWithAuth(url, {
         method: editingRoute ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
@@ -147,8 +150,8 @@ export default function RoutesPage() {
         handleClearForm();
         fetchRoutes();
       } else {
-        const error = await response.json();
-        alert(error.error || "Failed to save route");
+        const error = await response.json().catch(() => ({}));
+        alert((error as any).error || "Failed to save route");
       }
     } catch (err: any) {
       console.error("Save route error:", err.message);
@@ -171,37 +174,32 @@ export default function RoutesPage() {
     if (!confirm("Are you sure you want to delete this route?")) return;
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Not authenticated");
-        return;
-      }
-      const response = await fetch(`http://localhost:5000/admin/routes/${id}`, {
+      const response = await fetchWithAuth(`/admin/routes/${id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
 
       if (response.ok) {
         alert("Route deleted successfully!");
         fetchRoutes();
+      } else {
+        const error = await response.json().catch(() => ({}));
+        alert((error as any).error || "Failed to delete route");
       }
     } catch (error) {
       console.error("Failed to delete route:", error);
+      alert("Failed to delete route");
     }
   };
 
   const handleEditRoute = (route: Route) => {
     setRouteName(route.name);
-    
+
     try {
       const start = JSON.parse(route.startLocation);
       const end = JSON.parse(route.endLocation);
       setStartPoint([start.lat, start.lng]);
       setEndPoint([end.lat, end.lng]);
-    } catch (e) {
-      // If parsing fails, try comma-separated format
+    } catch {
       const [startLat, startLng] = route.startLocation.split(",").map(Number);
       const [endLat, endLng] = route.endLocation.split(",").map(Number);
       setStartPoint([startLat, startLng]);
@@ -211,21 +209,42 @@ export default function RoutesPage() {
     if (route.pickupSpots) {
       try {
         setPickupSpots(JSON.parse(route.pickupSpots));
-      } catch (e) {
+      } catch {
         setPickupSpots([]);
       }
+    } else {
+      setPickupSpots([]);
     }
 
     if (route.dropoffSpots) {
       try {
         setDropoffSpots(JSON.parse(route.dropoffSpots));
-      } catch (e) {
+      } catch {
         setDropoffSpots([]);
       }
+    } else {
+      setDropoffSpots([]);
     }
 
     setEditingRoute(route.id);
   };
+
+  if (sessionStatus === "loading") {
+    return <div className="p-6 text-muted-foreground">Loading...</div>;
+  }
+
+  if (sessionStatus === "unauthenticated") {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Not logged in</CardTitle>
+            <CardDescription>Please log in to access admin routes.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -233,22 +252,25 @@ export default function RoutesPage() {
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl border shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Route Management</h1>
-          <p className="text-slate-500 text-sm">Create and manage school bus routes with pickup and dropoff points.</p>
+          <p className="text-slate-500 text-sm">
+            Create and manage school bus routes with pickup and dropoff points.
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant="outline"
             onClick={handleClearForm}
             className="text-red-500 border-red-200 hover:bg-red-50"
           >
             <Trash2 className="mr-2 h-4 w-4" /> Clear
           </Button>
-          <Button 
+          <Button
             onClick={handleSaveRoute}
             disabled={!routeName || !startPoint || !endPoint}
             className="bg-green-600 hover:bg-green-700 h-10 px-8 font-bold shadow-md"
           >
-            <Save className="mr-2 h-4 w-4" /> {editingRoute ? "Update Route" : "Save Route"}
+            <Save className="mr-2 h-4 w-4" />{" "}
+            {editingRoute ? "Update Route" : "Save Route"}
           </Button>
         </div>
       </div>
@@ -323,11 +345,15 @@ export default function RoutesPage() {
               <div className="p-3 bg-slate-50 rounded-lg space-y-2">
                 <div className="text-xs">
                   <span className="font-semibold">Start: </span>
-                  {startPoint ? `${startPoint[0].toFixed(5)}, ${startPoint[1].toFixed(5)}` : "Not set"}
+                  {startPoint
+                    ? `${startPoint[0].toFixed(5)}, ${startPoint[1].toFixed(5)}`
+                    : "Not set"}
                 </div>
                 <div className="text-xs">
                   <span className="font-semibold">End: </span>
-                  {endPoint ? `${endPoint[0].toFixed(5)}, ${endPoint[1].toFixed(5)}` : "Not set"}
+                  {endPoint
+                    ? `${endPoint[0].toFixed(5)}, ${endPoint[1].toFixed(5)}`
+                    : "Not set"}
                 </div>
               </div>
 
@@ -336,7 +362,10 @@ export default function RoutesPage() {
                   <Label className="text-xs">Pickup Spots ({pickupSpots.length})</Label>
                   <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
                     {pickupSpots.map((spot, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-blue-50 p-2 rounded text-xs">
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between bg-blue-50 p-2 rounded text-xs"
+                      >
                         <span className="truncate">{spot.name}</span>
                         <Button
                           size="sm"
@@ -357,7 +386,10 @@ export default function RoutesPage() {
                   <Label className="text-xs">Dropoff Spots ({dropoffSpots.length})</Label>
                   <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
                     {dropoffSpots.map((spot, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-green-50 p-2 rounded text-xs">
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between bg-green-50 p-2 rounded text-xs"
+                      >
                         <span className="truncate">{spot.name}</span>
                         <Button
                           size="sm"
@@ -379,7 +411,7 @@ export default function RoutesPage() {
         {/* Map Area */}
         <div className="lg:col-span-3 space-y-4">
           <div className="h-[500px] rounded-2xl overflow-hidden border-2 shadow-inner bg-slate-50">
-            <MapComponent 
+            <MapComponent
               pickup={startPoint}
               dropoff={endPoint}
               mode={mode}
@@ -410,7 +442,13 @@ export default function RoutesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {routes.length === 0 ? (
+                  {loadingRoutes ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        Loading...
+                      </TableCell>
+                    </TableRow>
+                  ) : routes.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center text-muted-foreground">
                         No routes created yet
@@ -421,18 +459,20 @@ export default function RoutesPage() {
                       <TableRow key={route.id}>
                         <TableCell className="font-medium">{route.name}</TableCell>
                         <TableCell>
-                          {route.pickupSpots ? JSON.parse(route.pickupSpots).length : 0}
+                          {route.pickupSpots ? safeCount(route.pickupSpots) : 0}
                         </TableCell>
                         <TableCell>
-                          {route.dropoffSpots ? JSON.parse(route.dropoffSpots).length : 0}
+                          {route.dropoffSpots ? safeCount(route.dropoffSpots) : 0}
                         </TableCell>
                         <TableCell>{route.busCount}</TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            route.status === "active" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-gray-100 text-gray-800"
-                          }`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              route.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
                             {route.status}
                           </span>
                         </TableCell>
@@ -466,4 +506,13 @@ export default function RoutesPage() {
       </div>
     </div>
   );
+}
+
+function safeCount(json: string) {
+  try {
+    const parsed = JSON.parse(json);
+    return Array.isArray(parsed) ? parsed.length : 0;
+  } catch {
+    return 0;
+  }
 }

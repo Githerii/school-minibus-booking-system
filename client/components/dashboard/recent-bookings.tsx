@@ -1,8 +1,9 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react";
+import { fetchWithAuth } from "@/lib/api";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,19 +11,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-type BookingStatus = "booked" | "pending" | "completed" | "cancelled"
+type BookingStatus = "booked" | "pending" | "completed" | "cancelled";
 
 interface Booking {
-  booking_id: number
-  bus: string
-  route: string
-  pickup: string
-  dropoff: string
-  numSeats: number
-  bookingDate: string
-  status: BookingStatus
+  booking_id: number;
+  bus: string;
+  route: string | null;
+  pickup: string;
+  dropoff: string;
+  numSeats: number;
+  bookingDate: string;
+  status: BookingStatus;
 }
 
 const statusStyles: Record<BookingStatus, string> = {
@@ -30,35 +31,34 @@ const statusStyles: Record<BookingStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
   completed: "bg-muted text-muted-foreground hover:bg-muted",
   cancelled: "bg-red-100 text-red-800 hover:bg-red-100",
-}
+};
 
 export function RecentBookings() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchBookings()
-  }, [])
+    fetchBookings();
+  }, []);
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:5000/bookings", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetchWithAuth("/bookings");
 
       if (response.ok) {
-        const data = await response.json()
-        setBookings(data.slice(0, 5)) // Show only 5 most recent
+        const data = await response.json();
+        setBookings(data.slice(0, 5));
+      } else {
+        // not logged in / invalid token
+        setBookings([]);
       }
     } catch (error) {
-      console.error("Failed to fetch bookings:", error)
+      console.error("Failed to fetch bookings:", error);
+      setBookings([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Card>
@@ -67,7 +67,9 @@ export function RecentBookings() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center text-muted-foreground py-8">Loading bookings...</div>
+          <div className="text-center text-muted-foreground py-8">
+            Loading bookings...
+          </div>
         ) : bookings.length === 0 ? (
           <div className="text-center text-muted-foreground py-8">
             No bookings yet. Book your first ride!
@@ -101,7 +103,7 @@ export function RecentBookings() {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={statusStyles[booking.status]}
+                      className={statusStyles[(booking.status || "booked") as BookingStatus]}
                     >
                       {booking.status}
                     </Badge>
@@ -113,5 +115,5 @@ export function RecentBookings() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
