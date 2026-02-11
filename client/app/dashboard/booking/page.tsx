@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   CalendarDays,
   Clock,
@@ -15,42 +15,46 @@ import {
   CheckCircle2,
   AlertCircle,
   Users,
-} from "lucide-react"
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+
+import { fetchWithAuth } from "@/lib/api";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface Booking {
-  booking_id: number
-  bus: string
-  route: string | null
-  pickup: string
-  dropoff: string
-  numSeats: number
-  selectedDays: string | null
-  bookingDate: string
-  status: string
+  booking_id: number;
+  bus: string;
+  route: string | null;
+  pickup: string;
+  dropoff: string;
+  numSeats: number;
+  selectedDays: string | null;
+  bookingDate: string;
+  status: string;
 }
 
 function getStatusBadge(status: string) {
@@ -61,93 +65,92 @@ function getStatusBadge(status: string) {
           <CheckCircle2 className="mr-1 size-3" />
           Booked
         </Badge>
-      )
+      );
     case "pending":
       return (
         <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">
           <Clock className="mr-1 size-3" />
           Pending
         </Badge>
-      )
+      );
     case "completed":
       return (
         <Badge className="bg-muted text-muted-foreground hover:bg-muted">
           <CheckCircle2 className="mr-1 size-3" />
           Completed
         </Badge>
-      )
+      );
     case "cancelled":
       return (
         <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
           <X className="mr-1 size-3" />
           Cancelled
         </Badge>
-      )
+      );
     default:
-      return <Badge variant="secondary">{status}</Badge>
+      return <Badge variant="secondary">{status}</Badge>;
   }
 }
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const router = useRouter();
+  const { status } = useSession();
+
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/login");
+  }, [status, router]);
 
   useEffect(() => {
-    fetchBookings()
-  }, [])
+    fetchBookings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchBookings = async () => {
     try {
-      const token = localStorage.getItem("token")
-      
-      if (!token) {
-        console.error("No token found")
-        setLoading(false)
-        return
-      }
-      
-      const response = await fetch("http://localhost:5000/bookings", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetchWithAuth("/bookings");
 
       if (response.ok) {
-        const data = await response.json()
-        console.log("Bookings fetched:", data)
-        setBookings(data)
+        const data = await response.json();
+        setBookings(data);
       } else {
-        console.error("Failed to fetch bookings:", response.status)
+        const err = await response.json().catch(() => ({}));
+        console.error("Failed to fetch bookings:", response.status, err);
       }
-    } catch (error) {
-      console.error("Failed to fetch bookings:", error)
+    } catch (error: any) {
+      console.error("Failed to fetch bookings:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const filteredBookings = bookings.filter((booking) => {
     const matchesSearch =
       booking.bus.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (booking.route && booking.route.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      booking.booking_id.toString().includes(searchQuery.toLowerCase())
+      (booking.route &&
+        booking.route.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      booking.booking_id.toString().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || booking.status.toLowerCase() === statusFilter.toLowerCase()
+      statusFilter === "all" ||
+      booking.status.toLowerCase() === statusFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch && matchesStatus;
+  });
 
   const getDaysCount = (selectedDays: string | null) => {
-    if (!selectedDays) return 0
+    if (!selectedDays) return 0;
     try {
-      return JSON.parse(selectedDays).length
+      return JSON.parse(selectedDays).length;
     } catch {
-      return 0
+      return 0;
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -204,7 +207,9 @@ export default function BookingsPage() {
               <AlertCircle className="size-12 text-muted-foreground" />
               <h3 className="mt-4 text-lg font-medium">No bookings found</h3>
               <p className="text-muted-foreground">
-                {bookings.length === 0 ? "You haven't made any bookings yet" : "Try adjusting your search or filters"}
+                {bookings.length === 0
+                  ? "You haven't made any bookings yet"
+                  : "Try adjusting your search or filters"}
               </p>
               {bookings.length === 0 && (
                 <Button asChild className="mt-4">
@@ -254,11 +259,14 @@ export default function BookingsPage() {
                   </div>
                 </div>
               </CardHeader>
+
               <CardContent>
                 <div className="grid gap-3 text-sm sm:grid-cols-3">
                   <div className="flex items-center gap-2">
                     <CalendarDays className="size-4 text-muted-foreground" />
-                    <span>{new Date(booking.bookingDate).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(booking.bookingDate).toLocaleDateString()}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Users className="size-4 text-muted-foreground" />
@@ -269,14 +277,19 @@ export default function BookingsPage() {
                     <span>{getDaysCount(booking.selectedDays)} day(s) scheduled</span>
                   </div>
                 </div>
-                <div className="mt-3 pt-3 border-t grid gap-2 text-sm">
+
+                <div className="mt-3 grid gap-2 border-t pt-3 text-sm">
                   <div className="flex items-center gap-2">
                     <MapPin className="size-4 text-emerald-600" />
-                    <span className="text-xs">Pickup: <span className="font-medium">{booking.pickup}</span></span>
+                    <span className="text-xs">
+                      Pickup: <span className="font-medium">{booking.pickup}</span>
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="size-4 text-red-600" />
-                    <span className="text-xs">Dropoff: <span className="font-medium">{booking.dropoff}</span></span>
+                    <span className="text-xs">
+                      Dropoff: <span className="font-medium">{booking.dropoff}</span>
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -285,5 +298,5 @@ export default function BookingsPage() {
         )}
       </div>
     </div>
-  )
+  );
 }
