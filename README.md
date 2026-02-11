@@ -18,7 +18,7 @@ Parents lack visibility on available transport options, routes, and schedules.
 
 -No Real-Time Tracking
 Parents have no way of knowing if their child has been picked up or dropped off safely.
-
+they can keep track
 
 **Proposed Solution**
 

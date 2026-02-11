@@ -1,34 +1,77 @@
 "use client"
 
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useState, useEffect } from "react"
 import { Bell, Search } from "lucide-react"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import Link from "next/link"
 
 export function DashboardHeader() {
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center border-b bg-background px-4">
-      <div className="flex flex-1 items-center gap-4">
-        {/* This button will toggle the drawer on mobile and collapse it on desktop */}
-        <SidebarTrigger />
-        
-        <div className="hidden md:block font-semibold text-lg">
-          SchoolRide
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-gray-50 dark:bg-gray-800 px-4 md:px-6 transition-colors duration-300">
+      <SidebarTrigger className="md:hidden" />
+
+      <div className="hidden flex-1 md:block">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search bookings..."
+            className="pl-9"
+          />
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Search className="size-5" />
-        </Button>
+      <div className="flex flex-1 items-center justify-end gap-4">
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="size-5" />
-          <span className="absolute top-2 right-2 flex size-2 rounded-full bg-primary" />
+          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+            2
+          </span>
+          <span className="sr-only">Notifications</span>
         </Button>
-        <Avatar className="size-8 border">
-          <AvatarImage src="/placeholder-user.jpg" />
-          <AvatarFallback>JD</AvatarFallback>
-        </Avatar>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative size-9 rounded-full">
+              <Avatar className="size-9">
+                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                <AvatarFallback>JD</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">Jane Doe</p>
+                <p className="text-xs text-muted-foreground">
+                  jane.doe@example.com
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/profile">Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings">Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/login">Sign Out</Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
