@@ -14,7 +14,9 @@ from app.models import (db, Parent, Route, Driver, Bus, Booking)
 def create_app():
     app = Flask(__name__)
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" #still trying to get the concept of config in postgreSQL with a password
+    #app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" 
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://school_admin:Admin%40123@localhost:5432/school_transport"
+
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_SECRET_KEY"] = "super-secret-change-this"
     jwt = JWTManager(app)
