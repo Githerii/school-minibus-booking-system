@@ -16,7 +16,8 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///school_transport.db" #still trying to get the concept of config in postgreSQL with a password
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["JWT_SECRET_KEY"] = "super-secret-change-this"
+    app.config["JWT_SECRET_KEY"] = "replace-this-with-a-very-long-random-string-32bytes+"
+
     jwt = JWTManager(app)
 
     # JWT error handlers

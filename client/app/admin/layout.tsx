@@ -25,7 +25,7 @@ export default function AdminLayout({
         const data = await res.json();
 
         if (data.role !== "admin") {
-          router.replace("/dashboard");
+          router.replace("/login");
           return;
         }
 

@@ -1,47 +1,57 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Calendar, MapPin } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { useEffect, useState } from "react";
+import { Calendar, MapPin } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Booking {
-  booking_id: number
-  pickup: string
-  dropoff: string
-  selectedDays: string
-  status: string
+  booking_id: number;
+  pickup: string;
+  dropoff: string;
+  selectedDays: string | null;
+  status: string;
 }
 
 export function PickupStatus() {
-  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
-  const [loading, setLoading] = useState(true)
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchUpcomingBookings()
-  }, [])
+    fetchUpcomingBookings();
+  }, []);
 
   const fetchUpcomingBookings = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("http://localhost:5000/bookings", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      const response = await fetchWithAuth("/bookings");
 
       if (response.ok) {
-        const data = await response.json()
-        // Get only active bookings, limit to 3
-        const active = data.filter((b: Booking) => b.status === "booked").slice(0, 3)
-        setUpcomingBookings(active)
+        const data = await response.json();
+        const active = data
+          .filter((b: Booking) => (b.status || "").toLowerCase() === "booked")
+          .slice(0, 3);
+        setUpcomingBookings(active);
+      } else {
+        // If user isn't logged in, backend returns 401/422 and we just show empty UI
+        setUpcomingBookings([]);
       }
     } catch (error) {
-      console.error("Failed to fetch bookings:", error)
+      console.error("Failed to fetch bookings:", error);
+      setUpcomingBookings([]);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const daysCount = (selectedDays: string | null) => {
+    if (!selectedDays) return 0;
+    try {
+      return JSON.parse(selectedDays).length;
+    } catch {
+      return 0;
+    }
+  };
 
   return (
     <Card>
@@ -83,7 +93,7 @@ export function PickupStatus() {
                   {booking.selectedDays && (
                     <div className="flex items-center gap-2">
                       <Calendar className="size-3" />
-                      <span>{JSON.parse(booking.selectedDays).length} days scheduled</span>
+                      <span>{daysCount(booking.selectedDays)} days scheduled</span>
                     </div>
                   )}
                 </div>
@@ -93,5 +103,5 @@ export function PickupStatus() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,3 +1,6 @@
+
+
+
 from app.app import app
 from app.models import db, Parent
 from werkzeug.security import generate_password_hash
