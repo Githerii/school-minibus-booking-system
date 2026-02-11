@@ -57,7 +57,7 @@ function StatCard({ title, value, change, changeType = 'neutral', icon: Icon, co
 
   return (
     <div className="group relative bg-white rounded-2xl border border-gray-200/60 p-6 shadow-sm hover:shadow-xl hover:border-gray-300/60 transition-all duration-300 overflow-hidden">
-      <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${colors.bg} opacity-100 transition-opacity duration-300`} />
       
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
@@ -67,7 +67,7 @@ function StatCard({ title, value, change, changeType = 'neutral', icon: Icon, co
               <p className="text-xs text-gray-400">{description}</p>
             )}
           </div>
-          <div className={`${colors.iconBg} p-3 rounded-xl shadow-lg ring-4 ${colors.iconRing} group-hover:scale-110 transition-transform duration-300`}>
+          <div className={`${colors.iconBg} p-3 rounded-xl shadow-lg ring-4 ${colors.iconRing} scale-110 transition-transform duration-300`}>
             <Icon className="w-6 h-6 text-white" />
           </div>
         </div>

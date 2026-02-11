@@ -30,7 +30,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-blue-600 text-white p-6 rounded-lg flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             Welcome back, {session.user?.name || session.user?.email}!
@@ -39,7 +39,7 @@ export default function DashboardPage() {
             Here's an overview of your children's transport schedule.
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-black text-grey hover:bg-gray-100">
           <Link href="/dashboard/book">
             <Plus className="mr-2 size-4" />
             Book A Ride
