@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Bus,
   CalendarDays,
-  MapPin,
   User,
   Settings,
   LogOut,
@@ -45,10 +44,22 @@ export function DashboardSidebar() {
   return (
     <Sidebar
       variant="sidebar"
-      collapsible="none"
-      className="relative w-[260px] shrink-0 border-r"
+      collapsible="icon"               // ✅ enables mobile drawer + desktop collapse
+      className="
+        h-screen
+        w-[260px]
+        shrink-0
+        border-r
+        bg-background
+        md:static
+        fixed
+        inset-y-0
+        left-0
+        z-40
+      "
     >
-      <SidebarHeader className="p-4">
+      {/* Header */}
+      <SidebarHeader className="h-16 px-4 flex items-center border-b">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-md bg-primary">
             <Bus className="size-5 text-primary-foreground" />
@@ -57,9 +68,7 @@ export function DashboardSidebar() {
         </Link>
       </SidebarHeader>
 
-      <SidebarSeparator />
-
-      <SidebarContent>
+      <SidebarContent className="overflow-y-auto">
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -69,9 +78,8 @@ export function DashboardSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    tooltip={item.title}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} className="flex items-center gap-2">
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -93,9 +101,8 @@ export function DashboardSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={pathname === item.href}
-                    tooltip={item.title}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} className="flex items-center gap-2">
                       <item.icon className="size-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -107,11 +114,12 @@ export function DashboardSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-2">
+      {/* Footer */}
+      <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Sign Out">
-              <Link href="/login">
+            <SidebarMenuButton asChild>
+              <Link href="/login" className="flex items-center gap-2">
                 <LogOut className="size-4" />
                 <span>Sign Out</span>
               </Link>
