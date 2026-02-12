@@ -113,7 +113,7 @@ export default function HelpPage() {
               Mon-Fri, 8AM - 6PM
             </p>
             <Button variant="outline" className="mt-4 w-full bg-transparent" size="sm">
-              +1 (800) 123-4567
+              +254700 234567
             </Button>
           </CardContent>
         </Card>

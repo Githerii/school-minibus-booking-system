@@ -35,7 +35,6 @@ const mainNavItems = [
 
 const accountNavItems = [
   { title: "Profile", href: "/dashboard/profile", icon: User },
-  { title: "Settings", href: "/dashboard/settings", icon: Settings },
   { title: "Help & Support", href: "/dashboard/help", icon: HelpCircle },
 ]
 
