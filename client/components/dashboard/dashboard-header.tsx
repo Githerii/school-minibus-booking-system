@@ -1,9 +1,11 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useState, useEffect } from "react"
+import { Bell, Search } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Input } from "@/components/ui/input"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,95 +14,65 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User } from "lucide-react"
 import Link from "next/link"
 
 export function DashboardHeader() {
-  const { data: session } = useSession()
-  const user = session?.user
-
-  const initials =
-    user?.name
-      ?.split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase() || "U"
-
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-background px-6">
-      
-      {/* Left Section */}
-      <div className="flex items-center gap-4">
-        <SidebarTrigger />
-        <h1 className="text-lg font-semibold tracking-tight">
-          Dashboard
-        </h1>
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-gray-50 dark:bg-gray-800 px-4 md:px-6 transition-colors duration-300">
+      <SidebarTrigger className="md:hidden" />
+
+      <div className="hidden flex-1 md:block">
+        <div className="relative max-w-sm">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search bookings..."
+            className="pl-9"
+          />
+        </div>
       </div>
 
-      {/* Right Section */}
-      {user && (
+      <div className="flex flex-1 items-center justify-end gap-4">
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="size-5" />
+          <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+            2
+          </span>
+          <span className="sr-only">Notifications</span>
+        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="flex items-center gap-3 rounded-full px-3 py-2 hover:bg-muted transition"
-            >
-              {/* Avatar with Online Dot */}
-              <div className="relative">
-                <Avatar className="h-9 w-9 border bg-muted">
-                  <AvatarFallback className="text-sm font-semibold">
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-
-                {/* Online Status */}
-                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
-              </div>
-
-              {/* Name + Email */}
-              <div className="hidden sm:flex flex-col items-start text-left">
-                <span className="text-sm font-medium leading-none">
-                  {user.name}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {user.email}
-                </span>
-              </div>
+            <Button variant="ghost" className="relative size-9 rounded-full">
+              <Avatar className="size-9">
+                <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
+                <AvatarFallback>JD</AvatarFallback>
+              </Avatar>
             </Button>
           </DropdownMenuTrigger>
-
-          <DropdownMenuContent
-            align="end"
-            className="w-52 rounded-xl shadow-md"
-          >
-            <DropdownMenuLabel className="text-xs uppercase tracking-wide text-muted-foreground">
-              Account
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">Jane Doe</p>
+                <p className="text-xs text-muted-foreground">
+                  jane.doe@example.com
+                </p>
+              </div>
             </DropdownMenuLabel>
-
             <DropdownMenuSeparator />
-
             <DropdownMenuItem asChild>
-              <Link
-                href="/dashboard/profile"
-                className="flex items-center gap-2"
-              >
-                <User className="h-4 w-4" />
-                Profile
-              </Link>
+              <Link href="/dashboard/profile">Profile</Link>
             </DropdownMenuItem>
-
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard/settings">Settings</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="flex items-center gap-2 text-red-600 focus:text-red-600 cursor-pointer"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
+            <DropdownMenuItem asChild>
+              <Link href="/login">Sign Out</Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      )}
+      </div>
     </header>
   )
 }
